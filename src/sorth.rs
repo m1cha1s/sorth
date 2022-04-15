@@ -1,7 +1,12 @@
 pub struct Sorth {
     pub running: bool,
+
     compile_mode: bool,
+    comment_mode: bool,
+    see_mode: bool,
+
     int_stack: Vec<i32>,
+
     new_compiled_word: String,
     compiled_words: Vec<String>,
 }
@@ -11,6 +16,8 @@ impl Sorth {
         Sorth {
             running: true,
             compile_mode: false,
+            see_mode: false,
+            comment_mode: false,
             int_stack: Vec::new(),
             new_compiled_word: String::new(),
             compiled_words: Vec::new(),
@@ -22,7 +29,28 @@ impl Sorth {
 
         let split = line.split_whitespace();
         for word in split {
-            if self.compile_mode {
+            if self.see_mode {
+                let compiled_word_index = self
+                    .compiled_words
+                    .iter()
+                    .position(|compiled| compiled.starts_with(word));
+
+                if compiled_word_index.is_none() {
+                    return Err("No such word defined!!!".to_string());
+                }
+
+                out_buffer.push_str(
+                    self.compiled_words[compiled_word_index.unwrap()]
+                        .clone()
+                        .as_str(),
+                );
+
+                self.see_mode = false;
+            } else if self.comment_mode {
+                if word == ")" {
+                    self.comment_mode = false;
+                }
+            } else if self.compile_mode {
                 if word == ";" {
                     self.end_compile();
                     continue;
@@ -33,11 +61,21 @@ impl Sorth {
                     continue;
                 }
                 match word {
-                    "+" => out_buffer.push_str(self.add().as_str()),
-                    "-" => out_buffer.push_str(self.subtract().as_str()),
-                    "*" => out_buffer.push_str(self.multiply().as_str()),
-                    "/" => out_buffer.push_str(self.divide().as_str()),
+                    // Basic math ops
+                    "+" => self.add(),
+                    "-" => self.subtract(),
+                    "*" => self.multiply(),
+                    "/" => self.divide(),
 
+                    // Logic ops
+                    "=" => self.equal(),
+                    "<>" => self.not_equal(),
+                    "and" => self.and(),
+                    "or" => self.or(),
+                    ">" => self.grate_than(),
+                    "<" => self.less_than(),
+
+                    // Exit
                     "bye" => {
                         if compiled {
                             return Ok(out_buffer);
@@ -45,13 +83,23 @@ impl Sorth {
                         self.running = false
                     }
 
-                    "dup" => out_buffer.push_str(self.dup().as_str()),
-                    "." => out_buffer.push_str(self.pop().as_str()),
+                    // Stack ops
+                    "dup" => self.dup(),
+                    "2dup" => self.two_dup(),
+                    "pop" => self.drop(),
+                    "swap" => self.swap(),
+                    "rot" => self.rot(),
 
-                    "peek" => out_buffer.push_str(self.dot().as_str()),
+                    // Stack display ops
+                    "." => out_buffer += self.dot().as_str(),
+                    "peek" => out_buffer += self.peek().as_str(),
 
-                    ":" => out_buffer.push_str(self.start_compile().as_str()),
+                    // Mode starting sumbols
+                    ":" => self.start_compile(),
+                    "(" => self.comment_mode = true,
+                    "see" => self.see_mode = true,
 
+                    // Custom words
                     _ => {
                         if self
                             .compiled_words
@@ -91,60 +139,83 @@ impl Sorth {
         }
     }
 
-    fn add(&mut self) -> String {
+    fn add(&mut self) {
         let x = self.int_stack.pop().unwrap_or(0);
         let y = self.int_stack.pop().unwrap_or(0);
         let result = x + y;
         self.int_stack.push(result);
-        "".to_string()
     }
 
-    fn subtract(&mut self) -> String {
+    fn subtract(&mut self) {
         let x = self.int_stack.pop().unwrap_or(0);
         let y = self.int_stack.pop().unwrap_or(0);
         let result = x - y;
         self.int_stack.push(result);
-        "".to_string()
     }
 
-    fn multiply(&mut self) -> String {
+    fn multiply(&mut self) {
         let x = self.int_stack.pop().unwrap_or(0);
         let y = self.int_stack.pop().unwrap_or(0);
         let result = x * y;
         self.int_stack.push(result);
-        "".to_string()
     }
 
-    fn divide(&mut self) -> String {
+    fn divide(&mut self) {
         let x = self.int_stack.pop().unwrap_or(0);
         let y = self.int_stack.pop().unwrap_or(1);
         let result = x / y;
         self.int_stack.push(result);
-        "".to_string()
     }
 
-    fn dup(&mut self) -> String {
+    fn dup(&mut self) {
         let head = self.int_stack.pop().unwrap_or(0);
         self.int_stack.push(head);
         self.int_stack.push(head);
-        "".to_string()
     }
 
-    fn pop(&mut self) -> String {
+    fn two_dup(&mut self) {
+        let x = self.int_stack.pop().unwrap_or(0);
+        let y = self.int_stack.pop().unwrap_or(0);
+        self.int_stack.push(y);
+        self.int_stack.push(x);
+        self.int_stack.push(y);
+        self.int_stack.push(x);
+    }
+
+    fn drop(&mut self) {
+        let _ = self.int_stack.pop().unwrap_or(0);
+    }
+
+    fn swap(&mut self) {
+        let x = self.int_stack.pop().unwrap_or(0);
+        let y = self.int_stack.pop().unwrap_or(0);
+        self.int_stack.push(x);
+        self.int_stack.push(y);
+    }
+
+    fn rot(&mut self) {
+        let x = self.int_stack.pop().unwrap_or(0);
+        let y = self.int_stack.pop().unwrap_or(0);
+        let z = self.int_stack.pop().unwrap_or(0);
+        self.int_stack.push(y);
+        self.int_stack.push(x);
+        self.int_stack.push(z);
+    }
+
+    fn dot(&mut self) -> String {
         let head = self.int_stack.pop().unwrap_or(0);
         head.to_string()
     }
 
-    fn dot(&mut self) -> String {
-        self.int_stack.last().unwrap().to_string()
+    fn peek(&mut self) -> String {
+        self.int_stack.last().unwrap_or(&0).to_string()
     }
 
-    fn start_compile(&mut self) -> String {
+    fn start_compile(&mut self) {
         self.compile_mode = true;
-        "".to_string()
     }
 
-    fn end_compile(&mut self) -> String {
+    fn end_compile(&mut self) {
         self.new_compiled_word = self.new_compiled_word.trim().to_string();
         let new_word_name = self
             .new_compiled_word
@@ -165,13 +236,11 @@ impl Sorth {
         self.compiled_words.push(self.new_compiled_word.clone());
         self.new_compiled_word.clear();
         self.compile_mode = false;
-        "".to_string()
     }
 
-    fn compile(&mut self, word: &str) -> String {
+    fn compile(&mut self, word: &str) {
         self.new_compiled_word += " ";
         self.new_compiled_word += word;
-        "".to_string()
     }
 
     fn run_compiled(&mut self, word: &str) -> Result<String, String> {
@@ -188,5 +257,71 @@ impl Sorth {
         }
 
         return self.eval(word_copy, true);
+    }
+
+    fn equal(&mut self) {
+        let a = self.int_stack.pop().unwrap_or(0);
+        let b = self.int_stack.pop().unwrap_or(0);
+
+        if a == b {
+            self.int_stack.push(-1);
+        } else {
+            self.int_stack.push(0);
+        }
+    }
+
+    fn not_equal(&mut self) {
+        let a = self.int_stack.pop().unwrap_or(0);
+        let b = self.int_stack.pop().unwrap_or(0);
+
+        if a != b {
+            self.int_stack.push(-1);
+        } else {
+            self.int_stack.push(0);
+        }
+    }
+
+    fn and(&mut self) {
+        let a = self.int_stack.pop().unwrap_or(0);
+        let b = self.int_stack.pop().unwrap_or(0);
+
+        if a == b {
+            self.int_stack.push(-1);
+        } else {
+            self.int_stack.push(0);
+        }
+    }
+
+    fn or(&mut self) {
+        let a = self.int_stack.pop().unwrap_or(0);
+        let b = self.int_stack.pop().unwrap_or(0);
+
+        if (a == -1) || (b == -1) {
+            self.int_stack.push(-1);
+        } else {
+            self.int_stack.push(0);
+        }
+    }
+
+    fn grate_than(&mut self) {
+        let a = self.int_stack.pop().unwrap_or(0);
+        let b = self.int_stack.pop().unwrap_or(0);
+
+        if a > b {
+            self.int_stack.push(-1);
+        } else {
+            self.int_stack.push(0);
+        }
+    }
+
+    fn less_than(&mut self) {
+        let a = self.int_stack.pop().unwrap_or(0);
+        let b = self.int_stack.pop().unwrap_or(0);
+
+        if a < b {
+            self.int_stack.push(-1);
+        } else {
+            self.int_stack.push(0);
+        }
     }
 }
