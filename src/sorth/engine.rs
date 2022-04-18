@@ -1,14 +1,16 @@
 pub struct Sorth {
     pub running: bool,
 
-    compile_mode: bool,
-    comment_mode: bool,
-    see_mode: bool,
+    pub compile_mode: bool,
+    pub comment_mode: bool,
+    pub see_mode: bool,
 
-    int_stack: Vec<i32>,
+    pub int_stack: Vec<i32>,
 
-    new_compiled_word: String,
-    compiled_words: Vec<String>,
+    pub currently_parsed_word: String,
+
+    pub new_compiled_word: String,
+    pub compiled_words: Vec<String>,
 }
 
 impl Sorth {
@@ -21,6 +23,7 @@ impl Sorth {
             int_stack: Vec::new(),
             new_compiled_word: String::new(),
             compiled_words: Vec::new(),
+            currently_parsed_word: "".to_string(),
         }
     }
 
@@ -149,7 +152,7 @@ impl Sorth {
     fn subtract(&mut self) {
         let x = self.int_stack.pop().unwrap_or(0);
         let y = self.int_stack.pop().unwrap_or(0);
-        let result = x - y;
+        let result = y - x;
         self.int_stack.push(result);
     }
 
@@ -163,7 +166,7 @@ impl Sorth {
     fn divide(&mut self) {
         let x = self.int_stack.pop().unwrap_or(0);
         let y = self.int_stack.pop().unwrap_or(1);
-        let result = x / y;
+        let result = y / x;
         self.int_stack.push(result);
     }
 

@@ -1,7 +1,9 @@
 mod sorth;
 
+use sorth::prelude::*;
+
 fn main() {
-    let mut s = sorth::Sorth::new();
+    let mut s = Sorth::new();
 
     while s.running {
         let mut line = String::new();
