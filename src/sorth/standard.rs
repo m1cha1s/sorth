@@ -11,6 +11,16 @@ impl WordList for Standard {
     fn new() -> Self {
         Standard {
             normal: vec![
+                (|s| s.curr_word == "if" && s.compiled_exec, if_word),
+                (|s| s.curr_word == "else" && s.compiled_exec, else_word),
+                (|s| s.curr_word == "then" && s.compiled_exec, then_word),
+                (
+                    |s: &Engine| match s.conditional_stack.last() {
+                        Some(val) => !val.clone(),
+                        None => false,
+                    },
+                    conditional_skip,
+                ),
                 (|s| s.curr_word == "+", add),
                 (|s| s.curr_word == "-", subtract),
                 (|s| s.curr_word == "*", multiply),
@@ -72,11 +82,47 @@ fn int_number(s: &mut Engine) -> Result<String, String> {
     Ok("".to_string())
 }
 
+fn if_word(s: &mut Engine) -> Result<String, String> {
+    let cond = s.int_stack.pop();
+    match cond {
+        Some(cond_val) => {
+            let val = cond_val == -1;
+            s.conditional_stack.push(val);
+        }
+        None => return Err("Error Int stack underflow!".to_string()),
+    }
+    Ok("".to_string())
+}
+
+fn else_word(s: &mut Engine) -> Result<String, String> {
+    let cond = s.conditional_stack.pop();
+    match cond {
+        Some(cond_val) => {
+            s.conditional_stack.push(!cond_val);
+        }
+        None => return Err("Error Conditional stack underflow!".to_string()),
+    }
+    Ok("".to_string())
+}
+
+fn then_word(s: &mut Engine) -> Result<String, String> {
+    let cond = s.conditional_stack.pop();
+    match cond {
+        Some(_) => {}
+        None => return Err("Error Conditional stack underflow!".to_string()),
+    }
+    Ok("".to_string())
+}
+
+fn conditional_skip(_s: &mut Engine) -> Result<String, String> {
+    Ok("".to_string())
+}
+
 fn bye(s: &mut Engine) -> Result<String, String> {
-    if !s.compiled {
+    if !s.compiled_exec {
         s.running = false;
     } else {
-        s.compiled = false;
+        s.compiled_exec = false;
     }
     Ok("".to_string())
 }
@@ -261,9 +307,9 @@ fn run_compiled(s: &mut Engine) -> Result<String, String> {
         word_copy.remove(0);
     }
 
-    s.compiled = true;
+    s.compiled_exec = true;
     let ret = s.eval(word_copy);
-    s.compiled = false;
+    s.compiled_exec = false;
 
     ret
 }

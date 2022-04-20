@@ -2,11 +2,13 @@ use super::prelude::{Word, WordList};
 
 pub struct Engine {
     pub running: bool,
-    pub compiled: bool,
+    pub compiled_exec: bool,
 
     pub mode: EngineMode,
 
     pub int_stack: Vec<i32>,
+
+    pub conditional_stack: Vec<bool>,
 
     pub curr_word: String,
 
@@ -39,7 +41,8 @@ impl Engine {
             compile_words: Vec::new(),
             comment_words: Vec::new(),
             see_words: Vec::new(),
-            compiled: false,
+            compiled_exec: false,
+            conditional_stack: Vec::new(),
         }
     }
 
@@ -119,7 +122,7 @@ impl Engine {
             return Err("Error unknown word!".to_string());
         }
 
-        if !self.compiled {
+        if !self.compiled_exec {
             out_buffer.push_str(" Ok.\n");
         }
 
