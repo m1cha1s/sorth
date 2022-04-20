@@ -3,7 +3,10 @@ pub mod engine;
 
 // Keyword sets
 pub mod standard;
+pub mod word;
 
 pub mod prelude {
-    pub use crate::sorth::engine::*;
+    pub use super::engine::*;
+    pub use super::standard::*;
+    pub use super::word::*;
 }

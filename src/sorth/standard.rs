@@ -1,29 +1,87 @@
-use super::prelude::Sorth;
+use super::prelude::{Engine, EngineMode, Word, WordList};
 
-struct Standard {
-    words: Vec<(String, fn(s: &mut Sorth) -> Result<String, String>)>,
+pub struct Standard {
+    normal: Vec<Word>,
+    compiled: Vec<Word>,
+    see: Vec<Word>,
+    comment: Vec<Word>,
 }
 
-impl Standard {
+impl WordList for Standard {
     fn new() -> Self {
         Standard {
-            words: vec![
-                ("+".to_string(), add),
-                ("-".to_string(), subtract),
-                ("*".to_string(), multiply),
-                ("/".to_string(), divide),
-                ("=".to_string(), equal),
-                ("<>".to_string(), not_equal),
-                ("and".to_string(), and),
-                ("or".to_string(), or),
-                (">".to_string(), grater_than),
-                ("<".to_string(), less_than),
+            normal: vec![
+                (|s| s.curr_word == "+", add),
+                (|s| s.curr_word == "-", subtract),
+                (|s| s.curr_word == "*", multiply),
+                (|s| s.curr_word == "/", divide),
+                (|s| s.curr_word == "=", equal),
+                (|s| s.curr_word == "<>", not_equal),
+                (|s| s.curr_word == "and", and),
+                (|s| s.curr_word == "or", or),
+                (|s| s.curr_word == ">", grater_than),
+                (|s| s.curr_word == "<", less_than),
+                (|s| s.curr_word == ".", dot),
+                (|s| s.curr_word == "dup", dup),
+                (|s| s.curr_word == "2dup", two_dup),
+                (|s| s.curr_word == "drop", drop),
+                (|s| s.curr_word == "swap", swap),
+                (|s| s.curr_word == "rot", rot),
+                (|s| s.curr_word == "peek", peek),
+                (|s| s.curr_word == ":", start_compile),
+                (
+                    |s: &Engine| {
+                        s.compiled_words
+                            .iter()
+                            .any(|c| c.starts_with(s.curr_word.as_str()))
+                    },
+                    run_compiled,
+                ),
+                (|s| s.curr_word == "bye", bye),
+                (|s| s.curr_word.parse::<i32>().is_ok(), int_number),
             ],
+            compiled: vec![
+                (|s| s.curr_word != ";", compile),
+                (|s| s.curr_word == ";", end_compile),
+            ],
+            see: vec![],
+            comment: vec![],
         }
+    }
+
+    fn get_normal(&self) -> Vec<Word> {
+        self.normal.clone()
+    }
+
+    fn get_compile(&self) -> Vec<Word> {
+        self.compiled.clone()
+    }
+
+    fn get_see(&self) -> Vec<Word> {
+        self.see.clone()
+    }
+
+    fn get_comment(&self) -> Vec<Word> {
+        self.comment.clone()
     }
 }
 
-fn add(s: &mut Sorth) -> Result<String, String> {
+fn int_number(s: &mut Engine) -> Result<String, String> {
+    let number = s.curr_word.parse::<i32>().unwrap();
+    s.int_stack.push(number);
+    Ok("".to_string())
+}
+
+fn bye(s: &mut Engine) -> Result<String, String> {
+    if !s.compiled {
+        s.running = false;
+    } else {
+        s.compiled = false;
+    }
+    Ok("".to_string())
+}
+
+fn add(s: &mut Engine) -> Result<String, String> {
     let x = s.int_stack.pop();
     match x {
         Some(_) => {}
@@ -43,7 +101,7 @@ fn add(s: &mut Sorth) -> Result<String, String> {
     Ok("".to_string())
 }
 
-fn subtract(s: &mut Sorth) -> Result<String, String> {
+fn subtract(s: &mut Engine) -> Result<String, String> {
     let x = s.int_stack.pop();
     match x {
         Some(_) => {}
@@ -63,7 +121,7 @@ fn subtract(s: &mut Sorth) -> Result<String, String> {
     Ok("".to_string())
 }
 
-fn multiply(s: &mut Sorth) -> Result<String, String> {
+fn multiply(s: &mut Engine) -> Result<String, String> {
     let x = s.int_stack.pop();
     match x {
         Some(_) => {}
@@ -83,7 +141,7 @@ fn multiply(s: &mut Sorth) -> Result<String, String> {
     Ok("".to_string())
 }
 
-fn divide(s: &mut Sorth) -> Result<String, String> {
+fn divide(s: &mut Engine) -> Result<String, String> {
     let x = s.int_stack.pop();
     match x {
         Some(_) => {}
@@ -104,57 +162,62 @@ fn divide(s: &mut Sorth) -> Result<String, String> {
 }
 
 // TODO Exception handling from here down on
-// TODO Rework these functions to have proper return values
 
-fn dup(s: &mut Sorth) {
+fn dup(s: &mut Engine) -> Result<String, String> {
     let head = s.int_stack.pop().unwrap_or(0);
     s.int_stack.push(head);
     s.int_stack.push(head);
+    Ok("".to_string())
 }
 
-fn two_dup(s: &mut Sorth) {
+fn two_dup(s: &mut Engine) -> Result<String, String> {
     let x = s.int_stack.pop().unwrap_or(0);
     let y = s.int_stack.pop().unwrap_or(0);
     s.int_stack.push(y);
     s.int_stack.push(x);
     s.int_stack.push(y);
     s.int_stack.push(x);
+    Ok("".to_string())
 }
 
-fn drop(s: &mut Sorth) {
+fn drop(s: &mut Engine) -> Result<String, String> {
     let _ = s.int_stack.pop().unwrap_or(0);
+    Ok("".to_string())
 }
 
-fn swap(s: &mut Sorth) {
+fn swap(s: &mut Engine) -> Result<String, String> {
     let x = s.int_stack.pop().unwrap_or(0);
     let y = s.int_stack.pop().unwrap_or(0);
     s.int_stack.push(x);
     s.int_stack.push(y);
+    Ok("".to_string())
 }
 
-fn rot(s: &mut Sorth) {
+fn rot(s: &mut Engine) -> Result<String, String> {
     let x = s.int_stack.pop().unwrap_or(0);
     let y = s.int_stack.pop().unwrap_or(0);
     let z = s.int_stack.pop().unwrap_or(0);
     s.int_stack.push(y);
     s.int_stack.push(x);
     s.int_stack.push(z);
+    Ok("".to_string())
 }
 
-fn dot(s: &mut Sorth) -> String {
+fn dot(s: &mut Engine) -> Result<String, String> {
     let head = s.int_stack.pop().unwrap_or(0);
-    head.to_string()
+    Ok(head.to_string())
 }
 
-fn peek(s: &mut Sorth) -> String {
-    s.int_stack.last().unwrap_or(&0).to_string()
+fn peek(s: &mut Engine) -> Result<String, String> {
+    Ok(s.int_stack.last().unwrap_or(&0).to_string())
 }
 
-fn start_compile(s: &mut Sorth) {
-    s.compile_mode = true;
+fn start_compile(s: &mut Engine) -> Result<String, String> {
+    s.mode = EngineMode::COMPILE;
+    Ok("".to_string())
 }
 
-fn end_compile(s: &mut Sorth) {
+fn end_compile(s: &mut Engine) -> Result<String, String> {
     s.new_compiled_word = s.new_compiled_word.trim().to_string();
     let new_word_name = s
         .new_compiled_word
@@ -173,31 +236,39 @@ fn end_compile(s: &mut Sorth) {
 
     s.compiled_words.push(s.new_compiled_word.clone());
     s.new_compiled_word.clear();
-    s.compile_mode = false;
+    s.mode = EngineMode::NORMAL;
+
+    Ok("".to_string())
 }
 
-fn compile(s: &mut Sorth, word: &str) {
+fn compile(s: &mut Engine) -> Result<String, String> {
     s.new_compiled_word += " ";
-    s.new_compiled_word += word;
+    s.new_compiled_word += s.curr_word.as_str();
+
+    Ok("".to_string())
 }
 
-fn run_compiled(s: &mut Sorth, word: &str) -> Result<String, String> {
+fn run_compiled(s: &mut Engine) -> Result<String, String> {
     let compiled_word = s
         .compiled_words
         .iter()
-        .find(|compiled| compiled.starts_with(word))
+        .find(|compiled| compiled.starts_with(s.curr_word.as_str()))
         .unwrap();
 
     let mut word_copy = compiled_word.clone();
 
-    for _ in 0..word.len() {
+    for _ in 0..s.curr_word.len() {
         word_copy.remove(0);
     }
 
-    return s.eval(word_copy, true);
+    s.compiled = true;
+    let ret = s.eval(word_copy);
+    s.compiled = false;
+
+    ret
 }
 
-fn equal(s: &mut Sorth) {
+fn equal(s: &mut Engine) -> Result<String, String> {
     let a = s.int_stack.pop().unwrap_or(0);
     let b = s.int_stack.pop().unwrap_or(0);
 
@@ -206,9 +277,11 @@ fn equal(s: &mut Sorth) {
     } else {
         s.int_stack.push(0);
     }
+
+    Ok("".to_string())
 }
 
-fn not_equal(s: &mut Sorth) {
+fn not_equal(s: &mut Engine) -> Result<String, String> {
     let a = s.int_stack.pop().unwrap_or(0);
     let b = s.int_stack.pop().unwrap_or(0);
 
@@ -217,9 +290,11 @@ fn not_equal(s: &mut Sorth) {
     } else {
         s.int_stack.push(0);
     }
+
+    Ok("".to_string())
 }
 
-fn and(s: &mut Sorth) {
+fn and(s: &mut Engine) -> Result<String, String> {
     let a = s.int_stack.pop().unwrap_or(0);
     let b = s.int_stack.pop().unwrap_or(0);
 
@@ -228,9 +303,11 @@ fn and(s: &mut Sorth) {
     } else {
         s.int_stack.push(0);
     }
+
+    Ok("".to_string())
 }
 
-fn or(s: &mut Sorth) {
+fn or(s: &mut Engine) -> Result<String, String> {
     let a = s.int_stack.pop().unwrap_or(0);
     let b = s.int_stack.pop().unwrap_or(0);
 
@@ -239,9 +316,11 @@ fn or(s: &mut Sorth) {
     } else {
         s.int_stack.push(0);
     }
+
+    Ok("".to_string())
 }
 
-fn grate_than(s: &mut Sorth) {
+fn grater_than(s: &mut Engine) -> Result<String, String> {
     let a = s.int_stack.pop().unwrap_or(0);
     let b = s.int_stack.pop().unwrap_or(0);
 
@@ -250,9 +329,11 @@ fn grate_than(s: &mut Sorth) {
     } else {
         s.int_stack.push(0);
     }
+
+    Ok("".to_string())
 }
 
-fn less_than(s: &mut Sorth) {
+fn less_than(s: &mut Engine) -> Result<String, String> {
     let a = s.int_stack.pop().unwrap_or(0);
     let b = s.int_stack.pop().unwrap_or(0);
 
@@ -261,4 +342,6 @@ fn less_than(s: &mut Sorth) {
     } else {
         s.int_stack.push(0);
     }
+
+    Ok("".to_string())
 }
