@@ -8,7 +8,7 @@ pub struct Engine {
 
     pub int_stack: Vec<i32>,
 
-    pub conditional_stack: Vec<bool>,
+    pub conditional_stack: Vec<i8>,
 
     pub curr_word: String,
 
@@ -119,7 +119,7 @@ impl Engine {
                 }
             }
 
-            return Err("Error unknown word!".to_string());
+            return Err("Error unknown word: ".to_string() + word);
         }
 
         if !self.compiled_exec {

@@ -14,13 +14,7 @@ impl WordList for Standard {
                 (|s| s.curr_word == "if" && s.compiled_exec, if_word),
                 (|s| s.curr_word == "else" && s.compiled_exec, else_word),
                 (|s| s.curr_word == "then" && s.compiled_exec, then_word),
-                (
-                    |s: &Engine| match s.conditional_stack.last() {
-                        Some(val) => !val.clone(),
-                        None => false,
-                    },
-                    conditional_skip,
-                ),
+                (|s: &Engine| 1 != current_cond(s), conditional_skip),
                 (|s| s.curr_word == "+", add),
                 (|s| s.curr_word == "-", subtract),
                 (|s| s.curr_word == "*", multiply),
@@ -82,12 +76,27 @@ fn int_number(s: &mut Engine) -> Result<String, String> {
     Ok("".to_string())
 }
 
+fn current_cond(s: &Engine) -> i8 {
+    match s.conditional_stack.last() {
+        Some(&val) => val,
+        None => 1,
+    }
+}
+
 fn if_word(s: &mut Engine) -> Result<String, String> {
+    if current_cond(s) != 1 {
+        s.conditional_stack.push(0);
+        return Ok("".to_string());
+    }
+
     let cond = s.int_stack.pop();
     match cond {
         Some(cond_val) => {
-            let val = cond_val == -1;
-            s.conditional_stack.push(val);
+            if cond_val == -1 {
+                s.conditional_stack.push(1);
+            } else if cond_val == 0 {
+                s.conditional_stack.push(2);
+            }
         }
         None => return Err("Error Int stack underflow!".to_string()),
     }
@@ -98,7 +107,7 @@ fn else_word(s: &mut Engine) -> Result<String, String> {
     let cond = s.conditional_stack.pop();
     match cond {
         Some(cond_val) => {
-            s.conditional_stack.push(!cond_val);
+            s.conditional_stack.push(cond_val - 1);
         }
         None => return Err("Error Conditional stack underflow!".to_string()),
     }
