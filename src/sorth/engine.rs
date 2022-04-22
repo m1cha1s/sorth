@@ -9,8 +9,10 @@ pub struct Engine {
     pub int_stack: Vec<i32>,
 
     pub conditional_stack: Vec<i8>,
+    pub loop_stack: Vec<(i32, i32)>,
 
-    pub curr_word: String,
+    pub curr_line_vec: Vec<String>,
+    pub curr_word_idx: i32,
 
     pub new_compiled_word: String,
     pub compiled_words: Vec<String>,
@@ -36,13 +38,15 @@ impl Engine {
             int_stack: Vec::new(),
             new_compiled_word: String::new(),
             compiled_words: Vec::new(),
-            curr_word: "".to_string(),
             normal_words: Vec::new(),
             compile_words: Vec::new(),
             comment_words: Vec::new(),
             see_words: Vec::new(),
             compiled_exec: false,
             conditional_stack: Vec::new(),
+            loop_stack: Vec::new(),
+            curr_line_vec: Vec::new(),
+            curr_word_idx: -1,
         }
     }
 
@@ -56,14 +60,15 @@ impl Engine {
     pub fn eval(&mut self, line: String) -> Result<String, String> {
         let mut out_buffer = String::new();
 
-        let split = line.split_whitespace();
+        self.curr_line_vec = line.split_whitespace().map(|w| w.to_string()).collect();
+        self.curr_word_idx = -1;
 
-        for word in split {
+        while self.curr_word_idx + 1 < self.curr_line_vec.len() as i32 {
             if !out_buffer.ends_with(" ") {
                 out_buffer.push_str(" ");
             }
 
-            self.curr_word = word.to_string();
+            self.curr_word_idx += 1;
             match self.mode {
                 EngineMode::NORMAL => {
                     let word_def = self.normal_words.iter().find(|&w| w.0(self));
@@ -119,7 +124,8 @@ impl Engine {
                 }
             }
 
-            return Err("Error unknown word: ".to_string() + word);
+            return Err("Error unknown word: ".to_string()
+                + self.curr_line_vec[self.curr_word_idx as usize].as_str());
         }
 
         if !self.compiled_exec {
@@ -129,14 +135,11 @@ impl Engine {
         Ok(out_buffer)
     }
 
-    fn number(&mut self, word: &str) -> bool {
-        let numeric = word.parse::<i32>();
-        match numeric {
-            Ok(val) => {
-                self.int_stack.push(val);
-                return true;
-            }
-            Err(_) => return false,
+    pub fn get_curr_word(&self) -> String {
+        if self.curr_word_idx < 0 || self.curr_word_idx > self.curr_line_vec.len() as i32 {
+            return "".to_string();
         }
+
+        self.curr_line_vec[self.curr_word_idx as usize].clone()
     }
 }

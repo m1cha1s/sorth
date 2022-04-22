@@ -11,42 +11,58 @@ impl WordList for Standard {
     fn new() -> Self {
         Standard {
             normal: vec![
-                (|s| s.curr_word == "if" && s.compiled_exec, if_word),
-                (|s| s.curr_word == "else" && s.compiled_exec, else_word),
-                (|s| s.curr_word == "then" && s.compiled_exec, then_word),
+                // Conditional words
+                (|s| s.get_curr_word() == "if" && s.compiled_exec, if_word),
+                (
+                    |s| s.get_curr_word() == "else" && s.compiled_exec,
+                    else_word,
+                ),
+                (
+                    |s| s.get_curr_word() == "then" && s.compiled_exec,
+                    then_word,
+                ),
                 (|s: &Engine| 1 != current_cond(s), conditional_skip),
-                (|s| s.curr_word == "+", add),
-                (|s| s.curr_word == "-", subtract),
-                (|s| s.curr_word == "*", multiply),
-                (|s| s.curr_word == "/", divide),
-                (|s| s.curr_word == "=", equal),
-                (|s| s.curr_word == "<>", not_equal),
-                (|s| s.curr_word == "and", and),
-                (|s| s.curr_word == "or", or),
-                (|s| s.curr_word == ">", grater_than),
-                (|s| s.curr_word == "<", less_than),
-                (|s| s.curr_word == ".", dot),
-                (|s| s.curr_word == "dup", dup),
-                (|s| s.curr_word == "2dup", two_dup),
-                (|s| s.curr_word == "drop", drop),
-                (|s| s.curr_word == "swap", swap),
-                (|s| s.curr_word == "rot", rot),
-                (|s| s.curr_word == "peek", peek),
-                (|s| s.curr_word == ":", start_compile),
+                // Loop words
+                (|s| s.get_curr_word() == "do" && s.compiled_exec, do_word),
+                (
+                    |s| s.get_curr_word() == "loop" && s.compiled_exec,
+                    loop_word,
+                ),
+                (|s| s.get_curr_word() == "i" && s.compiled_exec, i_word),
+                // Rest of words
+                (|s| s.get_curr_word() == "+", add),
+                (|s| s.get_curr_word() == "-", subtract),
+                (|s| s.get_curr_word() == "*", multiply),
+                (|s| s.get_curr_word() == "/", divide),
+                (|s| s.get_curr_word() == "=", equal),
+                (|s| s.get_curr_word() == "<>", not_equal),
+                (|s| s.get_curr_word() == "and", and),
+                (|s| s.get_curr_word() == "or", or),
+                (|s| s.get_curr_word() == ">", grater_than),
+                (|s| s.get_curr_word() == "<", less_than),
+                (|s| s.get_curr_word() == ".", dot),
+                (|s| s.get_curr_word() == "dup", dup),
+                (|s| s.get_curr_word() == "2dup", two_dup),
+                (|s| s.get_curr_word() == "drop", drop),
+                (|s| s.get_curr_word() == "swap", swap),
+                (|s| s.get_curr_word() == "rot", rot),
+                (|s| s.get_curr_word() == "peek", peek),
+                (|s| s.get_curr_word() == ":", start_compile),
                 (
                     |s: &Engine| {
                         s.compiled_words
                             .iter()
-                            .any(|c| c.starts_with(s.curr_word.as_str()))
+                            .any(|c| c.starts_with(s.get_curr_word().as_str()))
                     },
                     run_compiled,
                 ),
-                (|s| s.curr_word == "bye", bye),
-                (|s| s.curr_word.parse::<i32>().is_ok(), int_number),
+                (|s| s.get_curr_word() == "bye", bye),
+                // Read number
+                (|s| s.get_curr_word().parse::<i32>().is_ok(), int_number),
             ],
             compiled: vec![
-                (|s| s.curr_word != ";", compile),
-                (|s| s.curr_word == ";", end_compile),
+                (|s| s.get_curr_word() != ";", compile),
+                (|s| s.get_curr_word() == ";", end_compile),
             ],
             see: vec![],
             comment: vec![],
@@ -71,10 +87,73 @@ impl WordList for Standard {
 }
 
 fn int_number(s: &mut Engine) -> Result<String, String> {
-    let number = s.curr_word.parse::<i32>().unwrap();
+    let number = s.get_curr_word().parse::<i32>().unwrap();
     s.int_stack.push(number);
     Ok("".to_string())
 }
+
+// Loop logic
+
+fn do_word(s: &mut Engine) -> Result<String, String> {
+    let index = s.int_stack.pop();
+    match index {
+        Some(_) => {}
+        None => return Err("Error Int stack underflow!".to_string()),
+    }
+    let limit = s.int_stack.pop();
+    match limit {
+        Some(_) => {}
+        None => return Err("Error Int stack underflow!".to_string()),
+    }
+
+    s.loop_stack.push((limit.unwrap(), index.unwrap()));
+
+    Ok("".to_string())
+}
+
+fn loop_word(s: &mut Engine) -> Result<String, String> {
+    let curr_loop = s.loop_stack.pop();
+    match curr_loop {
+        Some(_) => {}
+        None => return Err("Error Loop control stack underflow!".to_string()),
+    }
+
+    let mut curr_loop_contents = curr_loop.unwrap();
+    curr_loop_contents.1 += 1;
+
+    if curr_loop_contents.1 < curr_loop_contents.0 {
+        let mut cntr = 1;
+        while cntr != 0 {
+            s.curr_word_idx -= 1;
+
+            if s.get_curr_word() == "loop" {
+                cntr += 1;
+            }
+
+            if s.get_curr_word() == "do" {
+                cntr -= 1;
+            }
+        }
+        s.loop_stack.push(curr_loop_contents);
+    }
+
+    Ok("".to_string())
+}
+
+fn i_word(s: &mut Engine) -> Result<String, String> {
+    let curr_loop = s.loop_stack.last();
+
+    match curr_loop {
+        Some(_) => {}
+        None => return Err("Error Loop control stack underflow!".to_string()),
+    }
+
+    s.int_stack.push(curr_loop.unwrap().1);
+
+    Ok("".to_string())
+}
+
+// Conditional logic
 
 fn current_cond(s: &Engine) -> i8 {
     match s.conditional_stack.last() {
@@ -126,6 +205,8 @@ fn then_word(s: &mut Engine) -> Result<String, String> {
 fn conditional_skip(_s: &mut Engine) -> Result<String, String> {
     Ok("".to_string())
 }
+
+// Rest of logic
 
 fn bye(s: &mut Engine) -> Result<String, String> {
     if !s.compiled_exec {
@@ -298,7 +379,7 @@ fn end_compile(s: &mut Engine) -> Result<String, String> {
 
 fn compile(s: &mut Engine) -> Result<String, String> {
     s.new_compiled_word += " ";
-    s.new_compiled_word += s.curr_word.as_str();
+    s.new_compiled_word += s.get_curr_word().as_str();
 
     Ok("".to_string())
 }
@@ -307,12 +388,12 @@ fn run_compiled(s: &mut Engine) -> Result<String, String> {
     let compiled_word = s
         .compiled_words
         .iter()
-        .find(|compiled| compiled.starts_with(s.curr_word.as_str()))
+        .find(|compiled| compiled.starts_with(s.get_curr_word().as_str()))
         .unwrap();
 
     let mut word_copy = compiled_word.clone();
 
-    for _ in 0..s.curr_word.len() {
+    for _ in 0..s.get_curr_word().len() {
         word_copy.remove(0);
     }
 
