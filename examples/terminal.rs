@@ -1,11 +1,9 @@
-mod sorth;
-
 use sorth::prelude::*;
 
 fn main() {
     let mut engine = Engine::new();
 
-    let mut std_words = Standard::new();
+    let std_words = Standard::new();
 
     engine.import_word_list(std_words);
 

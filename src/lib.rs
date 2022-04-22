@@ -10,3 +10,6 @@ pub mod prelude {
     pub use super::standard::*;
     pub use super::word::*;
 }
+
+#[cfg(test)]
+mod tests {}

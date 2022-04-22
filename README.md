@@ -11,4 +11,5 @@ This is a language interpreter based on FORTH. It's main features are that it's 
 - [ ] Block storage wordset
 - [ ] File access wordset
 - [ ] Terminal user interface
-- [ ] Rework sorth into library crate and share on crates.io
+- [x] Rework sorth into library crate
+- [ ] Share on crates.io
