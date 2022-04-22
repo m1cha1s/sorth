@@ -10,4 +10,5 @@ This is a language interpreter based on FORTH. It's main features are that it's 
 - [ ] Float wordset
 - [ ] Block storage wordset
 - [ ] File access wordset
+- [ ] Terminal user interface
 - [ ] Rework sorth into library crate and share on crates.io
