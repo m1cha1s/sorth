@@ -1,4 +1,7 @@
-use super::prelude::{Engine, EngineMode, Word, WordList};
+use crate::{
+    errors::STACK_UNDERFLOW_ERROR,
+    prelude::{Engine, Types, Word, WordList},
+};
 
 pub struct Standard {
     normal: Vec<Word>,
@@ -23,10 +26,18 @@ impl WordList for Standard {
                 ),
                 (|s: &Engine| 1 != current_cond(s), conditional_skip),
                 // Loop words
-                (|s| s.get_curr_word() == "do" && s.compiled_exec, do_word),
+                (|s| s.get_curr_word() == "for" && s.compiled_exec, for_word),
                 (
-                    |s| s.get_curr_word() == "loop" && s.compiled_exec,
-                    loop_word,
+                    |s| s.get_curr_word() == "next" && s.compiled_exec,
+                    next_word,
+                ),
+                (
+                    |s| s.get_curr_word() == "bynext" && s.compiled_exec,
+                    bynext_word,
+                ),
+                (
+                    |s| s.get_curr_word() == "while" && s.compiled_exec,
+                    while_word,
                 ),
                 (|s| s.get_curr_word() == "i" && s.compiled_exec, i_word),
                 // Rest of words
@@ -34,8 +45,8 @@ impl WordList for Standard {
                 (|s| s.get_curr_word() == "-", subtract),
                 (|s| s.get_curr_word() == "*", multiply),
                 (|s| s.get_curr_word() == "/", divide),
-                (|s| s.get_curr_word() == "=", equal),
-                (|s| s.get_curr_word() == "<>", not_equal),
+                (|s| s.get_curr_word() == "==", equal),
+                (|s| s.get_curr_word() == "!=", not_equal),
                 (|s| s.get_curr_word() == "and", and),
                 (|s| s.get_curr_word() == "or", or),
                 (|s| s.get_curr_word() == ">", grater_than),
@@ -88,30 +99,78 @@ impl WordList for Standard {
 
 fn int_number(s: &mut Engine) -> Result<String, String> {
     let number = s.get_curr_word().parse::<i32>().unwrap();
-    s.int_stack.push(number);
+    s.main_stack.push(Types::Int(number));
     Ok("".to_string())
 }
 
 // Loop logic
 
+fn while_word(s: &mut Engine) -> Result<String, String> {
+    Ok("".to_string())
+}
+
 fn do_word(s: &mut Engine) -> Result<String, String> {
-    let index = s.int_stack.pop();
-    match index {
-        Some(_) => {}
-        None => return Err("Error Int stack underflow!".to_string()),
-    }
-    let limit = s.int_stack.pop();
-    match limit {
-        Some(_) => {}
-        None => return Err("Error Int stack underflow!".to_string()),
+    let cond = s.main_stack.pop();
+    if cond.is_none() {
+        return Err("Error Int stack underflow!".to_string());
     }
 
-    s.loop_stack.push((limit.unwrap(), index.unwrap()));
+    match cond.unwrap() {
+        Types::Int(x) => {
+            if x == 0 {
+                let mut controll = 1;
+                while controll != 0 {
+                    s.curr_word_idx -= 1;
+
+                    if s.get_curr_word() == "while" {
+                        controll += 1;
+                    }
+                }
+            }
+        }
+        Types::Float(x) => todo!(),
+        Types::Byte(x) => todo!(),
+        Types::Str(x) => todo!(),
+    }
 
     Ok("".to_string())
 }
 
-fn loop_word(s: &mut Engine) -> Result<String, String> {
+fn for_word(s: &mut Engine) -> Result<String, String> {
+    let index = s.main_stack.pop();
+    if index.is_none() {
+        return Err("Error Int stack underflow!".to_string());
+    }
+
+    let limit = s.main_stack.pop();
+    if limit.is_none() {
+        return Err("Error Int stack underflow!".to_string());
+    }
+
+    let index_int: i32;
+
+    match index.unwrap() {
+        Types::Int(x) => index_int = x,
+        Types::Float(_) => return Err("Error Invalid type!".to_string()),
+        Types::Byte(_) => return Err("Error Invalid type!".to_string()),
+        Types::Str(_) => return Err("Error Invalid type!".to_string()),
+    }
+
+    let limit_int: i32;
+
+    match limit.unwrap() {
+        Types::Int(x) => limit_int = x,
+        Types::Float(_) => return Err("Error Invalid type!".to_string()),
+        Types::Byte(_) => return Err("Error Invalid type!".to_string()),
+        Types::Str(_) => return Err("Error Invalid type!".to_string()),
+    }
+
+    s.loop_stack.push((limit_int, index_int));
+
+    Ok("".to_string())
+}
+
+fn next_word(s: &mut Engine) -> Result<String, String> {
     let curr_loop = s.loop_stack.pop();
     match curr_loop {
         Some(_) => {}
@@ -126,11 +185,55 @@ fn loop_word(s: &mut Engine) -> Result<String, String> {
         while cntr != 0 {
             s.curr_word_idx -= 1;
 
-            if s.get_curr_word() == "loop" {
+            if s.get_curr_word() == "next" || s.get_curr_word() == "bynext" {
                 cntr += 1;
             }
 
-            if s.get_curr_word() == "do" {
+            if s.get_curr_word() == "for" {
+                cntr -= 1;
+            }
+        }
+        s.loop_stack.push(curr_loop_contents);
+    }
+
+    Ok("".to_string())
+}
+
+fn bynext_word(s: &mut Engine) -> Result<String, String> {
+    let curr_loop = s.loop_stack.pop();
+    match curr_loop {
+        Some(_) => {}
+        None => return Err("Error Loop control stack underflow!".to_string()),
+    }
+
+    let mut curr_loop_contents = curr_loop.unwrap();
+
+    let increment = s.main_stack.pop();
+    if increment.is_none() {
+        return Err("Error Int stack underflow!".to_string());
+    }
+
+    let loop_increment: i32;
+
+    match increment.unwrap() {
+        Types::Int(x) => loop_increment = x,
+        Types::Float(_) => todo!(),
+        Types::Byte(_) => todo!(),
+        Types::Str(_) => todo!(),
+    }
+
+    curr_loop_contents.1 += loop_increment;
+
+    if curr_loop_contents.1 < curr_loop_contents.0 {
+        let mut cntr = 1;
+        while cntr != 0 {
+            s.curr_word_idx -= 1;
+
+            if s.get_curr_word() == "next" || s.get_curr_word() == "bynext" {
+                cntr += 1;
+            }
+
+            if s.get_curr_word() == "for" {
                 cntr -= 1;
             }
         }
@@ -148,7 +251,7 @@ fn i_word(s: &mut Engine) -> Result<String, String> {
         None => return Err("Error Loop control stack underflow!".to_string()),
     }
 
-    s.int_stack.push(curr_loop.unwrap().1);
+    s.main_stack.push(Types::Int(curr_loop.unwrap().1));
 
     Ok("".to_string())
 }
@@ -168,15 +271,20 @@ fn if_word(s: &mut Engine) -> Result<String, String> {
         return Ok("".to_string());
     }
 
-    let cond = s.int_stack.pop();
+    let cond = s.main_stack.pop();
     match cond {
-        Some(cond_val) => {
-            if cond_val == -1 {
-                s.conditional_stack.push(1);
-            } else if cond_val == 0 {
-                s.conditional_stack.push(2);
+        Some(cond_val) => match cond_val {
+            Types::Int(val) => {
+                if val == -1 {
+                    s.conditional_stack.push(1);
+                } else if val == 0 {
+                    s.conditional_stack.push(2);
+                }
             }
-        }
+            Types::Float(_) => return Err("Error Invalid type!".to_string()),
+            Types::Byte(_) => return Err("Error Invalid type!".to_string()),
+            Types::Str(_) => return Err("Error Invalid type!".to_string()),
+        },
         None => return Err("Error Int stack underflow!".to_string()),
     }
     Ok("".to_string())
@@ -218,53 +326,68 @@ fn bye(s: &mut Engine) -> Result<String, String> {
 }
 
 fn add(s: &mut Engine) -> Result<String, String> {
-    let x = s.int_stack.pop();
+    let x = s.main_stack.pop();
     match x {
         Some(_) => {}
-        None => return Err("Error <std_add> int stack underflow".to_string()),
+        None => return Err(STACK_UNDERFLOW_ERROR),
     }
 
-    let y = s.int_stack.pop();
+    let y = s.main_stack.pop();
     match y {
         Some(_) => {}
-        None => return Err("Error <std_add> int stack underflow".to_string()),
+        None => return Err(STACK_UNDERFLOW_ERROR),
     }
 
-    let result = y.unwrap() + x.unwrap();
-
-    s.int_stack.push(result);
+    match (y.unwrap(), x.unwrap()) {
+        (Types::Int(a), Types::Int(b)) => todo!(),
+        (Types::Int(a), Types::Float(b)) => todo!(),
+        (Types::Int(a), Types::Byte(b)) => todo!(),
+        (Types::Int(a), Types::Str(b)) => todo!(),
+        (Types::Float(a), Types::Int(b)) => todo!(),
+        (Types::Float(a), Types::Float(b)) => todo!(),
+        (Types::Float(a), Types::Byte(b)) => todo!(),
+        (Types::Float(a), Types::Str(b)) => todo!(),
+        (Types::Byte(a), Types::Int(b)) => todo!(),
+        (Types::Byte(a), Types::Float(b)) => todo!(),
+        (Types::Byte(a), Types::Byte(b)) => todo!(),
+        (Types::Byte(a), Types::Str(b)) => todo!(),
+        (Types::Str(a), Types::Int(b)) => todo!(),
+        (Types::Str(a), Types::Float(b)) => todo!(),
+        (Types::Str(a), Types::Byte(b)) => todo!(),
+        (Types::Str(a), Types::Str(b)) => todo!(),
+    }
 
     Ok("".to_string())
 }
 
 fn subtract(s: &mut Engine) -> Result<String, String> {
-    let x = s.int_stack.pop();
+    let x = s.main_stack.pop();
     match x {
         Some(_) => {}
-        None => return Err("Error <std_subtract> int stack underflow".to_string()),
+        None => return Err(STACK_UNDERFLOW_ERROR),
     }
 
-    let y = s.int_stack.pop();
+    let y = s.main_stack.pop();
     match y {
         Some(_) => {}
-        None => return Err("Error <std_subtract> int stack underflow".to_string()),
+        None => return Err(STACK_UNDERFLOW_ERROR),
     }
 
     let result = y.unwrap() - x.unwrap();
 
-    s.int_stack.push(result);
+    s.main_stack.push(result);
 
     Ok("".to_string())
 }
 
 fn multiply(s: &mut Engine) -> Result<String, String> {
-    let x = s.int_stack.pop();
+    let x = s.main_stack.pop();
     match x {
         Some(_) => {}
         None => return Err("Error <std_multiply> int stack underflow".to_string()),
     }
 
-    let y = s.int_stack.pop();
+    let y = s.main_stack.pop();
     match y {
         Some(_) => {}
         None => return Err("Error <std_multiply> int stack underflow".to_string()),
@@ -272,19 +395,19 @@ fn multiply(s: &mut Engine) -> Result<String, String> {
 
     let result = y.unwrap() * x.unwrap();
 
-    s.int_stack.push(result);
+    s.main_stack.push(result);
 
     Ok("".to_string())
 }
 
 fn divide(s: &mut Engine) -> Result<String, String> {
-    let x = s.int_stack.pop();
+    let x = s.main_stack.pop();
     match x {
         Some(_) => {}
         None => return Err("Error <std_divide> int stack underflow".to_string()),
     }
 
-    let y = s.int_stack.pop();
+    let y = s.main_stack.pop();
     match y {
         Some(_) => {}
         None => return Err("Error <std_divide> int stack underflow".to_string()),
@@ -292,7 +415,7 @@ fn divide(s: &mut Engine) -> Result<String, String> {
 
     let result = y.unwrap() / x.unwrap();
 
-    s.int_stack.push(result);
+    s.main_stack.push(result);
 
     Ok("".to_string())
 }
@@ -300,52 +423,52 @@ fn divide(s: &mut Engine) -> Result<String, String> {
 // TODO Exception handling from here down on
 
 fn dup(s: &mut Engine) -> Result<String, String> {
-    let head = s.int_stack.pop().unwrap_or(0);
-    s.int_stack.push(head);
-    s.int_stack.push(head);
+    let head = s.main_stack.pop().unwrap_or(0);
+    s.main_stack.push(head);
+    s.main_stack.push(head);
     Ok("".to_string())
 }
 
 fn two_dup(s: &mut Engine) -> Result<String, String> {
-    let x = s.int_stack.pop().unwrap_or(0);
-    let y = s.int_stack.pop().unwrap_or(0);
-    s.int_stack.push(y);
-    s.int_stack.push(x);
-    s.int_stack.push(y);
-    s.int_stack.push(x);
+    let x = s.main_stack.pop().unwrap_or(0);
+    let y = s.main_stack.pop().unwrap_or(0);
+    s.main_stack.push(y);
+    s.main_stack.push(x);
+    s.main_stack.push(y);
+    s.main_stack.push(x);
     Ok("".to_string())
 }
 
 fn drop(s: &mut Engine) -> Result<String, String> {
-    let _ = s.int_stack.pop().unwrap_or(0);
+    let _ = s.main_stack.pop().unwrap_or(0);
     Ok("".to_string())
 }
 
 fn swap(s: &mut Engine) -> Result<String, String> {
-    let x = s.int_stack.pop().unwrap_or(0);
-    let y = s.int_stack.pop().unwrap_or(0);
-    s.int_stack.push(x);
-    s.int_stack.push(y);
+    let x = s.main_stack.pop().unwrap_or(0);
+    let y = s.main_stack.pop().unwrap_or(0);
+    s.main_stack.push(x);
+    s.main_stack.push(y);
     Ok("".to_string())
 }
 
 fn rot(s: &mut Engine) -> Result<String, String> {
-    let x = s.int_stack.pop().unwrap_or(0);
-    let y = s.int_stack.pop().unwrap_or(0);
-    let z = s.int_stack.pop().unwrap_or(0);
-    s.int_stack.push(y);
-    s.int_stack.push(x);
-    s.int_stack.push(z);
+    let x = s.main_stack.pop().unwrap_or(0);
+    let y = s.main_stack.pop().unwrap_or(0);
+    let z = s.main_stack.pop().unwrap_or(0);
+    s.main_stack.push(y);
+    s.main_stack.push(x);
+    s.main_stack.push(z);
     Ok("".to_string())
 }
 
 fn dot(s: &mut Engine) -> Result<String, String> {
-    let head = s.int_stack.pop().unwrap_or(0);
+    let head = s.main_stack.pop().unwrap_or(0);
     Ok(head.to_string())
 }
 
 fn peek(s: &mut Engine) -> Result<String, String> {
-    Ok(s.int_stack.last().unwrap_or(&0).to_string())
+    Ok(s.main_stack.last().unwrap_or(&0).to_string())
 }
 
 fn start_compile(s: &mut Engine) -> Result<String, String> {
@@ -405,78 +528,78 @@ fn run_compiled(s: &mut Engine) -> Result<String, String> {
 }
 
 fn equal(s: &mut Engine) -> Result<String, String> {
-    let a = s.int_stack.pop().unwrap_or(0);
-    let b = s.int_stack.pop().unwrap_or(0);
+    let a = s.main_stack.pop().unwrap_or(0);
+    let b = s.main_stack.pop().unwrap_or(0);
 
     if a == b {
-        s.int_stack.push(-1);
+        s.main_stack.push(-1);
     } else {
-        s.int_stack.push(0);
+        s.main_stack.push(0);
     }
 
     Ok("".to_string())
 }
 
 fn not_equal(s: &mut Engine) -> Result<String, String> {
-    let a = s.int_stack.pop().unwrap_or(0);
-    let b = s.int_stack.pop().unwrap_or(0);
+    let a = s.main_stack.pop().unwrap_or(0);
+    let b = s.main_stack.pop().unwrap_or(0);
 
     if a != b {
-        s.int_stack.push(-1);
+        s.main_stack.push(-1);
     } else {
-        s.int_stack.push(0);
+        s.main_stack.push(0);
     }
 
     Ok("".to_string())
 }
 
 fn and(s: &mut Engine) -> Result<String, String> {
-    let a = s.int_stack.pop().unwrap_or(0);
-    let b = s.int_stack.pop().unwrap_or(0);
+    let a = s.main_stack.pop().unwrap_or(0);
+    let b = s.main_stack.pop().unwrap_or(0);
 
     if a == b {
-        s.int_stack.push(-1);
+        s.main_stack.push(-1);
     } else {
-        s.int_stack.push(0);
+        s.main_stack.push(0);
     }
 
     Ok("".to_string())
 }
 
 fn or(s: &mut Engine) -> Result<String, String> {
-    let a = s.int_stack.pop().unwrap_or(0);
-    let b = s.int_stack.pop().unwrap_or(0);
+    let a = s.main_stack.pop().unwrap_or(0);
+    let b = s.main_stack.pop().unwrap_or(0);
 
     if (a == -1) || (b == -1) {
-        s.int_stack.push(-1);
+        s.main_stack.push(-1);
     } else {
-        s.int_stack.push(0);
+        s.main_stack.push(0);
     }
 
     Ok("".to_string())
 }
 
 fn grater_than(s: &mut Engine) -> Result<String, String> {
-    let a = s.int_stack.pop().unwrap_or(0);
-    let b = s.int_stack.pop().unwrap_or(0);
+    let a = s.main_stack.pop().unwrap_or(0);
+    let b = s.main_stack.pop().unwrap_or(0);
 
     if a > b {
-        s.int_stack.push(-1);
+        s.main_stack.push(-1);
     } else {
-        s.int_stack.push(0);
+        s.main_stack.push(0);
     }
 
     Ok("".to_string())
 }
 
 fn less_than(s: &mut Engine) -> Result<String, String> {
-    let a = s.int_stack.pop().unwrap_or(0);
-    let b = s.int_stack.pop().unwrap_or(0);
+    let a = s.main_stack.pop().unwrap_or(0);
+    let b = s.main_stack.pop().unwrap_or(0);
 
     if a < b {
-        s.int_stack.push(-1);
+        s.main_stack.push(-1);
     } else {
-        s.int_stack.push(0);
+        s.main_stack.push(0);
     }
 
     Ok("".to_string())

@@ -1,4 +1,4 @@
-use super::prelude::{Word, WordList};
+use crate::prelude::{Types, Word, WordList};
 
 pub struct Engine {
     pub running: bool,
@@ -6,7 +6,7 @@ pub struct Engine {
 
     pub mode: EngineMode,
 
-    pub int_stack: Vec<i32>,
+    pub main_stack: Vec<Types>,
 
     pub conditional_stack: Vec<i8>,
     pub loop_stack: Vec<(i32, i32)>,
@@ -35,7 +35,7 @@ impl Engine {
         Engine {
             running: true,
             mode: EngineMode::NORMAL,
-            int_stack: Vec::new(),
+            main_stack: Vec::new(),
             new_compiled_word: String::new(),
             compiled_words: Vec::new(),
             normal_words: Vec::new(),
