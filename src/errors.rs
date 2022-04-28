@@ -1,2 +1,2 @@
-pub const STACK_UNDERFLOW_ERROR: String = "Error Stack underflow!".to_string();
-pub const INVALID_TYPE_ERROR: String = "Error Invalid type!".to_string();
+pub static STACK_UNDERFLOW_ERROR: &str = "Error Stack underflow!";
+pub static INVALID_TYPE_ERROR: &str = "Error Invalid type!";

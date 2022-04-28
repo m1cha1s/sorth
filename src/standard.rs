@@ -1,6 +1,6 @@
 use crate::{
-    errors::STACK_UNDERFLOW_ERROR,
-    prelude::{Engine, Types, Word, WordList},
+    errors::{INVALID_TYPE_ERROR, STACK_UNDERFLOW_ERROR},
+    prelude::{Engine, EngineMode, Types, Word, WordList},
 };
 
 pub struct Standard {
@@ -128,9 +128,7 @@ fn do_word(s: &mut Engine) -> Result<String, String> {
                 }
             }
         }
-        Types::Float(x) => todo!(),
-        Types::Byte(x) => todo!(),
-        Types::Str(x) => todo!(),
+        _ => return Err(INVALID_TYPE_ERROR.to_string()),
     }
 
     Ok("".to_string())
@@ -151,18 +149,22 @@ fn for_word(s: &mut Engine) -> Result<String, String> {
 
     match index.unwrap() {
         Types::Int(x) => index_int = x,
-        Types::Float(_) => return Err("Error Invalid type!".to_string()),
-        Types::Byte(_) => return Err("Error Invalid type!".to_string()),
-        Types::Str(_) => return Err("Error Invalid type!".to_string()),
+        Types::Float(_) => return Err(INVALID_TYPE_ERROR.to_string()),
+        Types::Byte(_) => return Err(INVALID_TYPE_ERROR.to_string()),
+        Types::Str(_) => return Err(INVALID_TYPE_ERROR.to_string()),
+        Types::Long(_) => todo!(),
+        Types::Double(_) => todo!(),
     }
 
     let limit_int: i32;
 
     match limit.unwrap() {
         Types::Int(x) => limit_int = x,
-        Types::Float(_) => return Err("Error Invalid type!".to_string()),
-        Types::Byte(_) => return Err("Error Invalid type!".to_string()),
-        Types::Str(_) => return Err("Error Invalid type!".to_string()),
+        Types::Float(_) => return Err(INVALID_TYPE_ERROR.to_string()),
+        Types::Byte(_) => return Err(INVALID_TYPE_ERROR.to_string()),
+        Types::Str(_) => return Err(INVALID_TYPE_ERROR.to_string()),
+        Types::Long(_) => return Err(INVALID_TYPE_ERROR.to_string()),
+        Types::Double(_) => return Err(INVALID_TYPE_ERROR.to_string()),
     }
 
     s.loop_stack.push((limit_int, index_int));
@@ -217,9 +219,11 @@ fn bynext_word(s: &mut Engine) -> Result<String, String> {
 
     match increment.unwrap() {
         Types::Int(x) => loop_increment = x,
-        Types::Float(_) => todo!(),
-        Types::Byte(_) => todo!(),
-        Types::Str(_) => todo!(),
+        Types::Float(_) => return Err(INVALID_TYPE_ERROR.to_string()),
+        Types::Byte(_) => return Err(INVALID_TYPE_ERROR.to_string()),
+        Types::Str(_) => return Err(INVALID_TYPE_ERROR.to_string()),
+        Types::Long(_) => return Err(INVALID_TYPE_ERROR.to_string()),
+        Types::Double(_) => return Err(INVALID_TYPE_ERROR.to_string()),
     }
 
     curr_loop_contents.1 += loop_increment;
@@ -281,11 +285,13 @@ fn if_word(s: &mut Engine) -> Result<String, String> {
                     s.conditional_stack.push(2);
                 }
             }
-            Types::Float(_) => return Err("Error Invalid type!".to_string()),
-            Types::Byte(_) => return Err("Error Invalid type!".to_string()),
-            Types::Str(_) => return Err("Error Invalid type!".to_string()),
+            Types::Float(_) => return Err(INVALID_TYPE_ERROR.to_string()),
+            Types::Byte(_) => return Err(INVALID_TYPE_ERROR.to_string()),
+            Types::Str(_) => return Err(INVALID_TYPE_ERROR.to_string()),
+            Types::Long(_) => return Err(INVALID_TYPE_ERROR.to_string()),
+            Types::Double(_) => return Err(INVALID_TYPE_ERROR.to_string()),
         },
-        None => return Err("Error Int stack underflow!".to_string()),
+        None => return Err(STACK_UNDERFLOW_ERROR.to_string()),
     }
     Ok("".to_string())
 }
@@ -327,34 +333,49 @@ fn bye(s: &mut Engine) -> Result<String, String> {
 
 fn add(s: &mut Engine) -> Result<String, String> {
     let x = s.main_stack.pop();
-    match x {
-        Some(_) => {}
-        None => return Err(STACK_UNDERFLOW_ERROR),
+    if x.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
     }
 
     let y = s.main_stack.pop();
-    match y {
-        Some(_) => {}
-        None => return Err(STACK_UNDERFLOW_ERROR),
+    if y.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
     }
 
     match (y.unwrap(), x.unwrap()) {
-        (Types::Int(a), Types::Int(b)) => todo!(),
-        (Types::Int(a), Types::Float(b)) => todo!(),
-        (Types::Int(a), Types::Byte(b)) => todo!(),
-        (Types::Int(a), Types::Str(b)) => todo!(),
-        (Types::Float(a), Types::Int(b)) => todo!(),
-        (Types::Float(a), Types::Float(b)) => todo!(),
-        (Types::Float(a), Types::Byte(b)) => todo!(),
-        (Types::Float(a), Types::Str(b)) => todo!(),
-        (Types::Byte(a), Types::Int(b)) => todo!(),
-        (Types::Byte(a), Types::Float(b)) => todo!(),
-        (Types::Byte(a), Types::Byte(b)) => todo!(),
-        (Types::Byte(a), Types::Str(b)) => todo!(),
-        (Types::Str(a), Types::Int(b)) => todo!(),
-        (Types::Str(a), Types::Float(b)) => todo!(),
-        (Types::Str(a), Types::Byte(b)) => todo!(),
-        (Types::Str(a), Types::Str(b)) => todo!(),
+        (Types::Int(a), Types::Int(b)) => s.main_stack.push(Types::Int(a + b)),
+        (Types::Int(a), Types::Float(b)) => s.main_stack.push(Types::Float(a as f32 + b)),
+        (Types::Int(a), Types::Byte(b)) => s.main_stack.push(Types::Int(a + b as i32)),
+        (Types::Int(a), Types::Long(b)) => s.main_stack.push(Types::Long(a as i64 + b)),
+        (Types::Int(a), Types::Double(b)) => s.main_stack.push(Types::Double(a as f64 + b)),
+
+        (Types::Float(a), Types::Int(b)) => s.main_stack.push(Types::Float(a + b as f32)),
+        (Types::Float(a), Types::Float(b)) => s.main_stack.push(Types::Float(a + b)),
+        (Types::Float(a), Types::Byte(b)) => s.main_stack.push(Types::Float(a + b as f32)),
+        (Types::Float(a), Types::Long(b)) => s.main_stack.push(Types::Float(a + b as f32)),
+        (Types::Float(a), Types::Double(b)) => s.main_stack.push(Types::Double(a as f64 + b)),
+
+        (Types::Byte(a), Types::Int(b)) => s.main_stack.push(Types::Int(a as i32 + b)),
+        (Types::Byte(a), Types::Float(b)) => s.main_stack.push(Types::Float(a as f32 + b)),
+        (Types::Byte(a), Types::Byte(b)) => s.main_stack.push(Types::Byte(a + b)),
+        (Types::Byte(a), Types::Long(b)) => s.main_stack.push(Types::Long(a as i64 + b)),
+        (Types::Byte(a), Types::Double(b)) => s.main_stack.push(Types::Double(a as f64 + b)),
+
+        (Types::Long(a), Types::Int(b)) => s.main_stack.push(Types::Long(a + b as i64)),
+        (Types::Long(a), Types::Long(b)) => s.main_stack.push(Types::Long(a + b)),
+        (Types::Long(a), Types::Float(b)) => s.main_stack.push(Types::Float(a as f32 + b)),
+        (Types::Long(a), Types::Double(b)) => s.main_stack.push(Types::Double(a as f64 + b)),
+        (Types::Long(a), Types::Byte(b)) => s.main_stack.push(Types::Long(a + b as i64)),
+
+        (Types::Double(a), Types::Int(b)) => s.main_stack.push(Types::Double(a + b as f64)),
+        (Types::Double(a), Types::Long(b)) => s.main_stack.push(Types::Double(a + b as f64)),
+        (Types::Double(a), Types::Float(b)) => s.main_stack.push(Types::Double(a + b as f64)),
+        (Types::Double(a), Types::Double(b)) => s.main_stack.push(Types::Double(a + b)),
+        (Types::Double(a), Types::Byte(b)) => s.main_stack.push(Types::Double(a + b as f64)),
+
+        (Types::Str(a), Types::Str(b)) => s.main_stack.push(Types::Str(a + b.as_str())),
+        (Types::Str(_), _) => return Err(INVALID_TYPE_ERROR.to_string()),
+        (_, Types::Str(_)) => return Err(INVALID_TYPE_ERROR.to_string()),
     }
 
     Ok("".to_string())
@@ -362,113 +383,251 @@ fn add(s: &mut Engine) -> Result<String, String> {
 
 fn subtract(s: &mut Engine) -> Result<String, String> {
     let x = s.main_stack.pop();
-    match x {
-        Some(_) => {}
-        None => return Err(STACK_UNDERFLOW_ERROR),
+    if x.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
     }
 
     let y = s.main_stack.pop();
-    match y {
-        Some(_) => {}
-        None => return Err(STACK_UNDERFLOW_ERROR),
+    if y.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
     }
 
-    let result = y.unwrap() - x.unwrap();
+    match (y.unwrap(), x.unwrap()) {
+        (Types::Int(a), Types::Int(b)) => s.main_stack.push(Types::Int(a - b)),
+        (Types::Int(a), Types::Float(b)) => s.main_stack.push(Types::Float(a as f32 - b)),
+        (Types::Int(a), Types::Byte(b)) => s.main_stack.push(Types::Int(a - b as i32)),
+        (Types::Int(a), Types::Long(b)) => s.main_stack.push(Types::Long(a as i64 - b)),
+        (Types::Int(a), Types::Double(b)) => s.main_stack.push(Types::Double(a as f64 - b)),
 
-    s.main_stack.push(result);
+        (Types::Float(a), Types::Int(b)) => s.main_stack.push(Types::Float(a - b as f32)),
+        (Types::Float(a), Types::Float(b)) => s.main_stack.push(Types::Float(a - b)),
+        (Types::Float(a), Types::Byte(b)) => s.main_stack.push(Types::Float(a - b as f32)),
+        (Types::Float(a), Types::Long(b)) => s.main_stack.push(Types::Float(a - b as f32)),
+        (Types::Float(a), Types::Double(b)) => s.main_stack.push(Types::Double(a as f64 - b)),
+
+        (Types::Byte(a), Types::Int(b)) => s.main_stack.push(Types::Int(a as i32 - b)),
+        (Types::Byte(a), Types::Float(b)) => s.main_stack.push(Types::Float(a as f32 - b)),
+        (Types::Byte(a), Types::Byte(b)) => s.main_stack.push(Types::Byte(a - b)),
+        (Types::Byte(a), Types::Long(b)) => s.main_stack.push(Types::Long(a as i64 - b)),
+        (Types::Byte(a), Types::Double(b)) => s.main_stack.push(Types::Double(a as f64 - b)),
+
+        (Types::Long(a), Types::Int(b)) => s.main_stack.push(Types::Long(a - b as i64)),
+        (Types::Long(a), Types::Long(b)) => s.main_stack.push(Types::Long(a - b)),
+        (Types::Long(a), Types::Float(b)) => s.main_stack.push(Types::Float(a as f32 - b)),
+        (Types::Long(a), Types::Double(b)) => s.main_stack.push(Types::Double(a as f64 - b)),
+        (Types::Long(a), Types::Byte(b)) => s.main_stack.push(Types::Long(a - b as i64)),
+
+        (Types::Double(a), Types::Int(b)) => s.main_stack.push(Types::Double(a - b as f64)),
+        (Types::Double(a), Types::Long(b)) => s.main_stack.push(Types::Double(a - b as f64)),
+        (Types::Double(a), Types::Float(b)) => s.main_stack.push(Types::Double(a - b as f64)),
+        (Types::Double(a), Types::Double(b)) => s.main_stack.push(Types::Double(a - b)),
+        (Types::Double(a), Types::Byte(b)) => s.main_stack.push(Types::Double(a - b as f64)),
+
+        //(Types::Str(a), Types::Str(b)) => s.main_stack.push(Types::Str(a + b.as_str())),
+        (Types::Str(_), _) => return Err(INVALID_TYPE_ERROR.to_string()),
+        (_, Types::Str(_)) => return Err(INVALID_TYPE_ERROR.to_string()),
+    }
 
     Ok("".to_string())
 }
 
 fn multiply(s: &mut Engine) -> Result<String, String> {
     let x = s.main_stack.pop();
-    match x {
-        Some(_) => {}
-        None => return Err("Error <std_multiply> int stack underflow".to_string()),
+    if x.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
     }
 
     let y = s.main_stack.pop();
-    match y {
-        Some(_) => {}
-        None => return Err("Error <std_multiply> int stack underflow".to_string()),
+    if y.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
     }
 
-    let result = y.unwrap() * x.unwrap();
+    match (y.unwrap(), x.unwrap()) {
+        (Types::Int(a), Types::Int(b)) => s.main_stack.push(Types::Int(a * b)),
+        (Types::Int(a), Types::Float(b)) => s.main_stack.push(Types::Float(a as f32 * b)),
+        (Types::Int(a), Types::Byte(b)) => s.main_stack.push(Types::Int(a * b as i32)),
+        (Types::Int(a), Types::Long(b)) => s.main_stack.push(Types::Long(a as i64 * b)),
+        (Types::Int(a), Types::Double(b)) => s.main_stack.push(Types::Double(a as f64 * b)),
 
-    s.main_stack.push(result);
+        (Types::Float(a), Types::Int(b)) => s.main_stack.push(Types::Float(a * b as f32)),
+        (Types::Float(a), Types::Float(b)) => s.main_stack.push(Types::Float(a * b)),
+        (Types::Float(a), Types::Byte(b)) => s.main_stack.push(Types::Float(a * b as f32)),
+        (Types::Float(a), Types::Long(b)) => s.main_stack.push(Types::Float(a * b as f32)),
+        (Types::Float(a), Types::Double(b)) => s.main_stack.push(Types::Double(a as f64 * b)),
+
+        (Types::Byte(a), Types::Int(b)) => s.main_stack.push(Types::Int(a as i32 * b)),
+        (Types::Byte(a), Types::Float(b)) => s.main_stack.push(Types::Float(a as f32 * b)),
+        (Types::Byte(a), Types::Byte(b)) => s.main_stack.push(Types::Byte(a * b)),
+        (Types::Byte(a), Types::Long(b)) => s.main_stack.push(Types::Long(a as i64 * b)),
+        (Types::Byte(a), Types::Double(b)) => s.main_stack.push(Types::Double(a as f64 * b)),
+
+        (Types::Long(a), Types::Int(b)) => s.main_stack.push(Types::Long(a * b as i64)),
+        (Types::Long(a), Types::Long(b)) => s.main_stack.push(Types::Long(a * b)),
+        (Types::Long(a), Types::Float(b)) => s.main_stack.push(Types::Float(a as f32 * b)),
+        (Types::Long(a), Types::Double(b)) => s.main_stack.push(Types::Double(a as f64 * b)),
+        (Types::Long(a), Types::Byte(b)) => s.main_stack.push(Types::Long(a * b as i64)),
+
+        (Types::Double(a), Types::Int(b)) => s.main_stack.push(Types::Double(a * b as f64)),
+        (Types::Double(a), Types::Long(b)) => s.main_stack.push(Types::Double(a * b as f64)),
+        (Types::Double(a), Types::Float(b)) => s.main_stack.push(Types::Double(a * b as f64)),
+        (Types::Double(a), Types::Double(b)) => s.main_stack.push(Types::Double(a * b)),
+        (Types::Double(a), Types::Byte(b)) => s.main_stack.push(Types::Double(a * b as f64)),
+
+        //(Types::Str(a), Types::Str(b)) => s.main_stack.push(Types::Str(a + b.as_str())),
+        (Types::Str(_), _) => return Err(INVALID_TYPE_ERROR.to_string()),
+        (_, Types::Str(_)) => return Err(INVALID_TYPE_ERROR.to_string()),
+    }
 
     Ok("".to_string())
 }
 
 fn divide(s: &mut Engine) -> Result<String, String> {
     let x = s.main_stack.pop();
-    match x {
-        Some(_) => {}
-        None => return Err("Error <std_divide> int stack underflow".to_string()),
+    if x.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
     }
 
     let y = s.main_stack.pop();
-    match y {
-        Some(_) => {}
-        None => return Err("Error <std_divide> int stack underflow".to_string()),
+    if y.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
     }
 
-    let result = y.unwrap() / x.unwrap();
+    match (y.unwrap(), x.unwrap()) {
+        (Types::Int(a), Types::Int(b)) => s.main_stack.push(Types::Int(a / b)),
+        (Types::Int(a), Types::Float(b)) => s.main_stack.push(Types::Float(a as f32 / b)),
+        (Types::Int(a), Types::Byte(b)) => s.main_stack.push(Types::Int(a / b as i32)),
+        (Types::Int(a), Types::Long(b)) => s.main_stack.push(Types::Long(a as i64 / b)),
+        (Types::Int(a), Types::Double(b)) => s.main_stack.push(Types::Double(a as f64 / b)),
 
-    s.main_stack.push(result);
+        (Types::Float(a), Types::Int(b)) => s.main_stack.push(Types::Float(a / b as f32)),
+        (Types::Float(a), Types::Float(b)) => s.main_stack.push(Types::Float(a / b)),
+        (Types::Float(a), Types::Byte(b)) => s.main_stack.push(Types::Float(a / b as f32)),
+        (Types::Float(a), Types::Long(b)) => s.main_stack.push(Types::Float(a / b as f32)),
+        (Types::Float(a), Types::Double(b)) => s.main_stack.push(Types::Double(a as f64 / b)),
+
+        (Types::Byte(a), Types::Int(b)) => s.main_stack.push(Types::Int(a as i32 / b)),
+        (Types::Byte(a), Types::Float(b)) => s.main_stack.push(Types::Float(a as f32 / b)),
+        (Types::Byte(a), Types::Byte(b)) => s.main_stack.push(Types::Byte(a / b)),
+        (Types::Byte(a), Types::Long(b)) => s.main_stack.push(Types::Long(a as i64 / b)),
+        (Types::Byte(a), Types::Double(b)) => s.main_stack.push(Types::Double(a as f64 / b)),
+
+        (Types::Long(a), Types::Int(b)) => s.main_stack.push(Types::Long(a / b as i64)),
+        (Types::Long(a), Types::Long(b)) => s.main_stack.push(Types::Long(a / b)),
+        (Types::Long(a), Types::Float(b)) => s.main_stack.push(Types::Float(a as f32 / b)),
+        (Types::Long(a), Types::Double(b)) => s.main_stack.push(Types::Double(a as f64 / b)),
+        (Types::Long(a), Types::Byte(b)) => s.main_stack.push(Types::Long(a / b as i64)),
+
+        (Types::Double(a), Types::Int(b)) => s.main_stack.push(Types::Double(a / b as f64)),
+        (Types::Double(a), Types::Long(b)) => s.main_stack.push(Types::Double(a / b as f64)),
+        (Types::Double(a), Types::Float(b)) => s.main_stack.push(Types::Double(a / b as f64)),
+        (Types::Double(a), Types::Double(b)) => s.main_stack.push(Types::Double(a / b)),
+        (Types::Double(a), Types::Byte(b)) => s.main_stack.push(Types::Double(a / b as f64)),
+
+        //(Types::Str(a), Types::Str(b)) => s.main_stack.push(Types::Str(a + b.as_str())),
+        (Types::Str(_), _) => return Err(INVALID_TYPE_ERROR.to_string()),
+        (_, Types::Str(_)) => return Err(INVALID_TYPE_ERROR.to_string()),
+    }
 
     Ok("".to_string())
 }
 
-// TODO Exception handling from here down on
-
 fn dup(s: &mut Engine) -> Result<String, String> {
-    let head = s.main_stack.pop().unwrap_or(0);
-    s.main_stack.push(head);
-    s.main_stack.push(head);
+    let head = s.main_stack.pop();
+
+    if head.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    let head_val = head.unwrap();
+
+    s.main_stack.push(head_val.clone());
+    s.main_stack.push(head_val);
     Ok("".to_string())
 }
 
 fn two_dup(s: &mut Engine) -> Result<String, String> {
-    let x = s.main_stack.pop().unwrap_or(0);
-    let y = s.main_stack.pop().unwrap_or(0);
-    s.main_stack.push(y);
-    s.main_stack.push(x);
-    s.main_stack.push(y);
-    s.main_stack.push(x);
+    let x = s.main_stack.pop();
+    let y = s.main_stack.pop();
+
+    if x.is_none() || y.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    let x_val = x.unwrap();
+    let y_val = y.unwrap();
+
+    s.main_stack.push(y_val.clone());
+    s.main_stack.push(x_val.clone());
+    s.main_stack.push(y_val);
+    s.main_stack.push(x_val);
     Ok("".to_string())
 }
 
 fn drop(s: &mut Engine) -> Result<String, String> {
-    let _ = s.main_stack.pop().unwrap_or(0);
+    let _ = s.main_stack.pop();
     Ok("".to_string())
 }
 
 fn swap(s: &mut Engine) -> Result<String, String> {
-    let x = s.main_stack.pop().unwrap_or(0);
-    let y = s.main_stack.pop().unwrap_or(0);
-    s.main_stack.push(x);
-    s.main_stack.push(y);
+    let x = s.main_stack.pop();
+    let y = s.main_stack.pop();
+
+    if x.is_none() || y.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    s.main_stack.push(x.unwrap());
+    s.main_stack.push(y.unwrap());
     Ok("".to_string())
 }
 
 fn rot(s: &mut Engine) -> Result<String, String> {
-    let x = s.main_stack.pop().unwrap_or(0);
-    let y = s.main_stack.pop().unwrap_or(0);
-    let z = s.main_stack.pop().unwrap_or(0);
-    s.main_stack.push(y);
-    s.main_stack.push(x);
-    s.main_stack.push(z);
+    let x = s.main_stack.pop();
+    let y = s.main_stack.pop();
+    let z = s.main_stack.pop();
+
+    if x.is_none() || y.is_none() || z.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    s.main_stack.push(y.unwrap());
+    s.main_stack.push(x.unwrap());
+    s.main_stack.push(z.unwrap());
     Ok("".to_string())
 }
 
 fn dot(s: &mut Engine) -> Result<String, String> {
-    let head = s.main_stack.pop().unwrap_or(0);
-    Ok(head.to_string())
+    let head = s.main_stack.pop();
+
+    if head.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    match head.unwrap() {
+        Types::Int(a) => Ok(a.to_string()),
+        Types::Long(a) => Ok(a.to_string()),
+        Types::Float(a) => Ok(a.to_string()),
+        Types::Double(a) => Ok(a.to_string()),
+        Types::Byte(a) => Ok(a.to_string()),
+        Types::Str(a) => Ok(a),
+    }
 }
 
 fn peek(s: &mut Engine) -> Result<String, String> {
-    Ok(s.main_stack.last().unwrap_or(&0).to_string())
+    let last = s.main_stack.last();
+
+    if last.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    match last.unwrap() {
+        Types::Int(a) => Ok(a.to_string()),
+        Types::Long(a) => Ok(a.to_string()),
+        Types::Float(a) => Ok(a.to_string()),
+        Types::Double(a) => Ok(a.to_string()),
+        Types::Byte(a) => Ok(a.to_string()),
+        Types::Str(a) => Ok(a.to_string()),
+    }
 }
 
 fn start_compile(s: &mut Engine) -> Result<String, String> {
@@ -528,78 +687,258 @@ fn run_compiled(s: &mut Engine) -> Result<String, String> {
 }
 
 fn equal(s: &mut Engine) -> Result<String, String> {
-    let a = s.main_stack.pop().unwrap_or(0);
-    let b = s.main_stack.pop().unwrap_or(0);
+    let a = s.main_stack.pop();
+    let b = s.main_stack.pop();
 
-    if a == b {
-        s.main_stack.push(-1);
+    if a.is_none() || b.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    let result: bool = match (a.unwrap(), b.unwrap()) {
+        (Types::Int(a), Types::Int(b)) => a == b,
+        (Types::Int(a), Types::Long(b)) => a as i64 == b,
+        (Types::Int(a), Types::Float(b)) => a as f32 == b,
+        (Types::Int(a), Types::Double(b)) => a as f64 == b,
+        (Types::Int(a), Types::Byte(b)) => a == b as i32,
+
+        (Types::Long(a), Types::Int(b)) => a == b as i64,
+        (Types::Long(a), Types::Long(b)) => a == b,
+        (Types::Long(a), Types::Float(b)) => a as f32 == b,
+        (Types::Long(a), Types::Double(b)) => a as f64 == b,
+        (Types::Long(a), Types::Byte(b)) => a == b as i64,
+
+        (Types::Float(a), Types::Int(b)) => a == b as f32,
+        (Types::Float(a), Types::Long(b)) => a == b as f32,
+        (Types::Float(a), Types::Float(b)) => a == b,
+        (Types::Float(a), Types::Double(b)) => a as f64 == b,
+        (Types::Float(a), Types::Byte(b)) => a == b as f32,
+
+        (Types::Double(a), Types::Int(b)) => a == b as f64,
+        (Types::Double(a), Types::Long(b)) => a == b as f64,
+        (Types::Double(a), Types::Float(b)) => a == b as f64,
+        (Types::Double(a), Types::Double(b)) => a == b,
+        (Types::Double(a), Types::Byte(b)) => a == b as f64,
+
+        (Types::Byte(a), Types::Int(b)) => a as i32 == b,
+        (Types::Byte(a), Types::Long(b)) => a as i64 == b,
+        (Types::Byte(a), Types::Float(b)) => a as f32 == b,
+        (Types::Byte(a), Types::Double(b)) => a as f64 == b,
+        (Types::Byte(a), Types::Byte(b)) => a == b,
+
+        (Types::Str(a), Types::Str(b)) => a == b,
+        (Types::Str(_), _) => return Err(INVALID_TYPE_ERROR.to_string()),
+        (_, Types::Str(_)) => return Err(INVALID_TYPE_ERROR.to_string()),
+    };
+
+    if result {
+        s.main_stack.push(Types::Int(-1));
     } else {
-        s.main_stack.push(0);
+        s.main_stack.push(Types::Int(0));
     }
 
     Ok("".to_string())
 }
 
 fn not_equal(s: &mut Engine) -> Result<String, String> {
-    let a = s.main_stack.pop().unwrap_or(0);
-    let b = s.main_stack.pop().unwrap_or(0);
+    let a = s.main_stack.pop();
+    let b = s.main_stack.pop();
 
-    if a != b {
-        s.main_stack.push(-1);
+    if a.is_none() || b.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    let result: bool = match (a.unwrap(), b.unwrap()) {
+        (Types::Int(a), Types::Int(b)) => a != b,
+        (Types::Int(a), Types::Long(b)) => a as i64 != b,
+        (Types::Int(a), Types::Float(b)) => a as f32 != b,
+        (Types::Int(a), Types::Double(b)) => a as f64 != b,
+        (Types::Int(a), Types::Byte(b)) => a != b as i32,
+
+        (Types::Long(a), Types::Int(b)) => a != b as i64,
+        (Types::Long(a), Types::Long(b)) => a != b,
+        (Types::Long(a), Types::Float(b)) => a as f32 != b,
+        (Types::Long(a), Types::Double(b)) => a as f64 != b,
+        (Types::Long(a), Types::Byte(b)) => a != b as i64,
+
+        (Types::Float(a), Types::Int(b)) => a != b as f32,
+        (Types::Float(a), Types::Long(b)) => a != b as f32,
+        (Types::Float(a), Types::Float(b)) => a != b,
+        (Types::Float(a), Types::Double(b)) => a as f64 != b,
+        (Types::Float(a), Types::Byte(b)) => a != b as f32,
+
+        (Types::Double(a), Types::Int(b)) => a != b as f64,
+        (Types::Double(a), Types::Long(b)) => a != b as f64,
+        (Types::Double(a), Types::Float(b)) => a != b as f64,
+        (Types::Double(a), Types::Double(b)) => a != b,
+        (Types::Double(a), Types::Byte(b)) => a != b as f64,
+
+        (Types::Byte(a), Types::Int(b)) => a as i32 != b,
+        (Types::Byte(a), Types::Long(b)) => a as i64 != b,
+        (Types::Byte(a), Types::Float(b)) => a as f32 != b,
+        (Types::Byte(a), Types::Double(b)) => a as f64 != b,
+        (Types::Byte(a), Types::Byte(b)) => a != b,
+
+        (Types::Str(a), Types::Str(b)) => a != b,
+        (Types::Str(_), _) => return Err(INVALID_TYPE_ERROR.to_string()),
+        (_, Types::Str(_)) => return Err(INVALID_TYPE_ERROR.to_string()),
+    };
+
+    if result {
+        s.main_stack.push(Types::Int(-1));
     } else {
-        s.main_stack.push(0);
+        s.main_stack.push(Types::Int(0));
     }
 
     Ok("".to_string())
 }
 
 fn and(s: &mut Engine) -> Result<String, String> {
-    let a = s.main_stack.pop().unwrap_or(0);
-    let b = s.main_stack.pop().unwrap_or(0);
+    let a = s.main_stack.pop();
+    let b = s.main_stack.pop();
 
-    if a == b {
-        s.main_stack.push(-1);
+    if a.is_none() || b.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    let result: bool = match (a.unwrap(), b.unwrap()) {
+        (Types::Int(a), Types::Int(b)) => a == b,
+
+        (_, _) => return Err(INVALID_TYPE_ERROR.to_string()),
+    };
+
+    if result {
+        s.main_stack.push(Types::Int(-1));
     } else {
-        s.main_stack.push(0);
+        s.main_stack.push(Types::Int(0));
     }
 
     Ok("".to_string())
 }
 
 fn or(s: &mut Engine) -> Result<String, String> {
-    let a = s.main_stack.pop().unwrap_or(0);
-    let b = s.main_stack.pop().unwrap_or(0);
+    let a = s.main_stack.pop();
+    let b = s.main_stack.pop();
 
-    if (a == -1) || (b == -1) {
-        s.main_stack.push(-1);
+    if a.is_none() || b.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    let result: bool = match (a.unwrap(), b.unwrap()) {
+        (Types::Int(a), Types::Int(b)) => (a == -1) || (b == -1),
+
+        (_, _) => return Err(INVALID_TYPE_ERROR.to_string()),
+    };
+
+    if result {
+        s.main_stack.push(Types::Int(-1));
     } else {
-        s.main_stack.push(0);
+        s.main_stack.push(Types::Int(0));
     }
 
     Ok("".to_string())
 }
 
 fn grater_than(s: &mut Engine) -> Result<String, String> {
-    let a = s.main_stack.pop().unwrap_or(0);
-    let b = s.main_stack.pop().unwrap_or(0);
+    let a = s.main_stack.pop();
+    let b = s.main_stack.pop();
 
-    if a > b {
-        s.main_stack.push(-1);
+    if a.is_none() || b.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    let result: bool = match (a.unwrap(), b.unwrap()) {
+        (Types::Int(a), Types::Int(b)) => a > b,
+        (Types::Int(a), Types::Long(b)) => a as i64 > b,
+        (Types::Int(a), Types::Float(b)) => a as f32 > b,
+        (Types::Int(a), Types::Double(b)) => a as f64 > b,
+        (Types::Int(a), Types::Byte(b)) => a > b as i32,
+
+        (Types::Long(a), Types::Int(b)) => a > b as i64,
+        (Types::Long(a), Types::Long(b)) => a > b,
+        (Types::Long(a), Types::Float(b)) => a as f32 > b,
+        (Types::Long(a), Types::Double(b)) => a as f64 > b,
+        (Types::Long(a), Types::Byte(b)) => a > b as i64,
+
+        (Types::Float(a), Types::Int(b)) => a > b as f32,
+        (Types::Float(a), Types::Long(b)) => a > b as f32,
+        (Types::Float(a), Types::Float(b)) => a > b,
+        (Types::Float(a), Types::Double(b)) => a as f64 > b,
+        (Types::Float(a), Types::Byte(b)) => a > b as f32,
+
+        (Types::Double(a), Types::Int(b)) => a > b as f64,
+        (Types::Double(a), Types::Long(b)) => a > b as f64,
+        (Types::Double(a), Types::Float(b)) => a > b as f64,
+        (Types::Double(a), Types::Double(b)) => a > b,
+        (Types::Double(a), Types::Byte(b)) => a > b as f64,
+
+        (Types::Byte(a), Types::Int(b)) => a as i32 > b,
+        (Types::Byte(a), Types::Long(b)) => a as i64 > b,
+        (Types::Byte(a), Types::Float(b)) => a as f32 > b,
+        (Types::Byte(a), Types::Double(b)) => a as f64 > b,
+        (Types::Byte(a), Types::Byte(b)) => a > b,
+
+        (Types::Str(a), Types::Str(b)) => a > b,
+        (Types::Str(_), _) => return Err(INVALID_TYPE_ERROR.to_string()),
+        (_, Types::Str(_)) => return Err(INVALID_TYPE_ERROR.to_string()),
+    };
+
+    if result {
+        s.main_stack.push(Types::Int(-1));
     } else {
-        s.main_stack.push(0);
+        s.main_stack.push(Types::Int(0));
     }
 
     Ok("".to_string())
 }
 
 fn less_than(s: &mut Engine) -> Result<String, String> {
-    let a = s.main_stack.pop().unwrap_or(0);
-    let b = s.main_stack.pop().unwrap_or(0);
+    let a = s.main_stack.pop();
+    let b = s.main_stack.pop();
 
-    if a < b {
-        s.main_stack.push(-1);
+    if a.is_none() || b.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    let result: bool = match (b.unwrap(), a.unwrap()) {
+        (Types::Int(a), Types::Int(b)) => a > b,
+        (Types::Int(a), Types::Long(b)) => a as i64 > b,
+        (Types::Int(a), Types::Float(b)) => a as f32 > b,
+        (Types::Int(a), Types::Double(b)) => a as f64 > b,
+        (Types::Int(a), Types::Byte(b)) => a > b as i32,
+
+        (Types::Long(a), Types::Int(b)) => a > b as i64,
+        (Types::Long(a), Types::Long(b)) => a > b,
+        (Types::Long(a), Types::Float(b)) => a as f32 > b,
+        (Types::Long(a), Types::Double(b)) => a as f64 > b,
+        (Types::Long(a), Types::Byte(b)) => a > b as i64,
+
+        (Types::Float(a), Types::Int(b)) => a > b as f32,
+        (Types::Float(a), Types::Long(b)) => a > b as f32,
+        (Types::Float(a), Types::Float(b)) => a > b,
+        (Types::Float(a), Types::Double(b)) => a as f64 > b,
+        (Types::Float(a), Types::Byte(b)) => a > b as f32,
+
+        (Types::Double(a), Types::Int(b)) => a > b as f64,
+        (Types::Double(a), Types::Long(b)) => a > b as f64,
+        (Types::Double(a), Types::Float(b)) => a > b as f64,
+        (Types::Double(a), Types::Double(b)) => a > b,
+        (Types::Double(a), Types::Byte(b)) => a > b as f64,
+
+        (Types::Byte(a), Types::Int(b)) => a as i32 > b,
+        (Types::Byte(a), Types::Long(b)) => a as i64 > b,
+        (Types::Byte(a), Types::Float(b)) => a as f32 > b,
+        (Types::Byte(a), Types::Double(b)) => a as f64 > b,
+        (Types::Byte(a), Types::Byte(b)) => a > b,
+
+        (Types::Str(a), Types::Str(b)) => a > b,
+        (Types::Str(_), _) => return Err(INVALID_TYPE_ERROR.to_string()),
+        (_, Types::Str(_)) => return Err(INVALID_TYPE_ERROR.to_string()),
+    };
+
+    if result {
+        s.main_stack.push(Types::Int(-1));
     } else {
-        s.main_stack.push(0);
+        s.main_stack.push(Types::Int(0));
     }
 
     Ok("".to_string())
