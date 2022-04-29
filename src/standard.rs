@@ -1,3 +1,5 @@
+use std::{thread::sleep, time::Duration};
+
 use crate::{
     errors::{INVALID_TYPE_ERROR, STACK_UNDERFLOW_ERROR},
     prelude::{Engine, EngineMode, Types, Word, WordList},
@@ -38,6 +40,11 @@ impl WordList for Standard {
                 (
                     |s| s.get_curr_word() == "while" && s.compiled_exec,
                     while_word,
+                ),
+                (|s| s.get_curr_word() == "do" && s.compiled_exec, do_word),
+                (
+                    |s| s.get_curr_word() == "again" && s.compiled_exec,
+                    again_word,
                 ),
                 (|s| s.get_curr_word() == "i" && s.compiled_exec, i_word),
                 // Rest of words
@@ -105,7 +112,7 @@ fn int_number(s: &mut Engine) -> Result<String, String> {
 
 // Loop logic
 
-fn while_word(s: &mut Engine) -> Result<String, String> {
+fn while_word(_s: &mut Engine) -> Result<String, String> {
     Ok("".to_string())
 }
 
@@ -120,15 +127,32 @@ fn do_word(s: &mut Engine) -> Result<String, String> {
             if x == 0 {
                 let mut controll = 1;
                 while controll != 0 {
-                    s.curr_word_idx -= 1;
+                    s.curr_word_idx += 1;
 
-                    if s.get_curr_word() == "while" {
-                        controll += 1;
+                    match s.get_curr_word().as_str() {
+                        "while" => controll += 1,
+                        "again" => controll -= 1,
+                        _ => {}
                     }
                 }
             }
         }
         _ => return Err(INVALID_TYPE_ERROR.to_string()),
+    }
+
+    Ok("".to_string())
+}
+
+fn again_word(s: &mut Engine) -> Result<String, String> {
+    let mut controll = 1;
+    while controll > 0 {
+        s.curr_word_idx -= 1;
+
+        match s.get_curr_word().as_str() {
+            "while" => controll -= 1,
+            "again" => controll += 1,
+            _ => {}
+        }
     }
 
     Ok("".to_string())
@@ -149,22 +173,14 @@ fn for_word(s: &mut Engine) -> Result<String, String> {
 
     match index.unwrap() {
         Types::Int(x) => index_int = x,
-        Types::Float(_) => return Err(INVALID_TYPE_ERROR.to_string()),
-        Types::Byte(_) => return Err(INVALID_TYPE_ERROR.to_string()),
-        Types::Str(_) => return Err(INVALID_TYPE_ERROR.to_string()),
-        Types::Long(_) => todo!(),
-        Types::Double(_) => todo!(),
+        _ => return Err(INVALID_TYPE_ERROR.to_string()),
     }
 
     let limit_int: i32;
 
     match limit.unwrap() {
         Types::Int(x) => limit_int = x,
-        Types::Float(_) => return Err(INVALID_TYPE_ERROR.to_string()),
-        Types::Byte(_) => return Err(INVALID_TYPE_ERROR.to_string()),
-        Types::Str(_) => return Err(INVALID_TYPE_ERROR.to_string()),
-        Types::Long(_) => return Err(INVALID_TYPE_ERROR.to_string()),
-        Types::Double(_) => return Err(INVALID_TYPE_ERROR.to_string()),
+        _ => return Err(INVALID_TYPE_ERROR.to_string()),
     }
 
     s.loop_stack.push((limit_int, index_int));
@@ -174,9 +190,8 @@ fn for_word(s: &mut Engine) -> Result<String, String> {
 
 fn next_word(s: &mut Engine) -> Result<String, String> {
     let curr_loop = s.loop_stack.pop();
-    match curr_loop {
-        Some(_) => {}
-        None => return Err("Error Loop control stack underflow!".to_string()),
+    if curr_loop.is_none() {
+        return Err("Error Loop control stack underflow!".to_string());
     }
 
     let mut curr_loop_contents = curr_loop.unwrap();
@@ -219,11 +234,7 @@ fn bynext_word(s: &mut Engine) -> Result<String, String> {
 
     match increment.unwrap() {
         Types::Int(x) => loop_increment = x,
-        Types::Float(_) => return Err(INVALID_TYPE_ERROR.to_string()),
-        Types::Byte(_) => return Err(INVALID_TYPE_ERROR.to_string()),
-        Types::Str(_) => return Err(INVALID_TYPE_ERROR.to_string()),
-        Types::Long(_) => return Err(INVALID_TYPE_ERROR.to_string()),
-        Types::Double(_) => return Err(INVALID_TYPE_ERROR.to_string()),
+        _ => return Err(INVALID_TYPE_ERROR.to_string()),
     }
 
     curr_loop_contents.1 += loop_increment;
@@ -285,11 +296,7 @@ fn if_word(s: &mut Engine) -> Result<String, String> {
                     s.conditional_stack.push(2);
                 }
             }
-            Types::Float(_) => return Err(INVALID_TYPE_ERROR.to_string()),
-            Types::Byte(_) => return Err(INVALID_TYPE_ERROR.to_string()),
-            Types::Str(_) => return Err(INVALID_TYPE_ERROR.to_string()),
-            Types::Long(_) => return Err(INVALID_TYPE_ERROR.to_string()),
-            Types::Double(_) => return Err(INVALID_TYPE_ERROR.to_string()),
+            _ => return Err(INVALID_TYPE_ERROR.to_string()),
         },
         None => return Err(STACK_UNDERFLOW_ERROR.to_string()),
     }
