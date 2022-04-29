@@ -1,5 +1,3 @@
-use std::{thread::sleep, time::Duration};
-
 use crate::{
     errors::{INVALID_TYPE_ERROR, STACK_UNDERFLOW_ERROR},
     prelude::{Engine, EngineMode, Types, Word, WordList},
@@ -47,6 +45,11 @@ impl WordList for Standard {
                     again_word,
                 ),
                 (|s| s.get_curr_word() == "i" && s.compiled_exec, i_word),
+                // Variable words
+                (|s| s.get_curr_word() == "let", let_word),
+                (|s| s.get_curr_word().starts_with("@"), get_var_addr_word),
+                (|s| s.get_curr_word() == "push", push_word),
+                (|s| s.get_curr_word() == "pop", pop_word),
                 // Rest of words
                 (|s| s.get_curr_word() == "+", add),
                 (|s| s.get_curr_word() == "-", subtract),
@@ -77,6 +80,32 @@ impl WordList for Standard {
                 (|s| s.get_curr_word() == "bye", bye),
                 // Read number
                 (|s| s.get_curr_word().parse::<i32>().is_ok(), int_number),
+                (
+                    |s: &Engine| {
+                        s.get_curr_word().parse::<i64>().is_ok()
+                            && s.get_curr_word().to_lowercase().ends_with("l")
+                    },
+                    long_number,
+                ),
+                (
+                    |s: &Engine| {
+                        let mut word: String = s.get_curr_word();
+                        word.pop();
+                        word.parse::<f32>().is_ok()
+                            && s.get_curr_word().to_lowercase().ends_with("f")
+                    },
+                    float_number,
+                ),
+                (
+                    |s: &Engine| s.get_curr_word().parse::<f64>().is_ok(),
+                    double_number,
+                ),
+                (
+                    |s: &Engine| {
+                        s.get_curr_word().starts_with("0x") && s.get_curr_word().len() == 4
+                    },
+                    byte_number,
+                ),
             ],
             compiled: vec![
                 (|s| s.get_curr_word() != ";", compile),
@@ -107,6 +136,126 @@ impl WordList for Standard {
 fn int_number(s: &mut Engine) -> Result<String, String> {
     let number = s.get_curr_word().parse::<i32>().unwrap();
     s.main_stack.push(Types::Int(number));
+    Ok("".to_string())
+}
+
+fn long_number(s: &mut Engine) -> Result<String, String> {
+    let number = s.get_curr_word().parse::<i64>().unwrap();
+    s.main_stack.push(Types::Long(number));
+    Ok("".to_string())
+}
+
+fn float_number(s: &mut Engine) -> Result<String, String> {
+    let mut word = s.get_curr_word();
+    word.pop();
+    let number = word.parse::<f32>().unwrap();
+    s.main_stack.push(Types::Float(number));
+    Ok("".to_string())
+}
+
+fn double_number(s: &mut Engine) -> Result<String, String> {
+    let number = s.get_curr_word().parse::<f64>().unwrap();
+    s.main_stack.push(Types::Double(number));
+    Ok("".to_string())
+}
+
+fn byte_number(s: &mut Engine) -> Result<String, String> {
+    let mut word = s.get_curr_word();
+    word.remove(0);
+    word.remove(0);
+
+    let number = u8::from_str_radix(word.as_str(), 16).unwrap();
+    s.main_stack.push(Types::Byte(number));
+    Ok("".to_string())
+}
+
+// Variable logic
+
+fn let_word(s: &mut Engine) -> Result<String, String> {
+    s.curr_word_idx += 1;
+
+    let potential_existing = s
+        .variable_stack
+        .iter()
+        .enumerate()
+        .find(|&v| (v.1).0 == s.get_curr_word());
+
+    let mut index = 0;
+    if potential_existing.is_some() {
+        index = potential_existing.unwrap().0;
+        s.variable_stack.remove(index);
+    }
+
+    s.variable_stack.push((s.get_curr_word(), Vec::new()));
+
+    Ok("".to_string())
+}
+
+fn get_var_addr_word(s: &mut Engine) -> Result<String, String> {
+    let mut word = s.get_curr_word();
+    word.remove(0);
+
+    let potential_existing = s
+        .variable_stack
+        .iter()
+        .enumerate()
+        .find(|&v| (v.1).0 == s.get_curr_word());
+
+    let mut index: i32 = 0;
+    if potential_existing.is_some() {
+        index = potential_existing.unwrap().0 as i32;
+    }
+
+    s.main_stack.push(Types::Int(index));
+
+    Ok("".to_string())
+}
+
+fn push_word(s: &mut Engine) -> Result<String, String> {
+    let val = s.main_stack.pop();
+    let var_index = s.main_stack.pop();
+
+    if val.is_none() || var_index.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    match (var_index.unwrap(), val.unwrap()) {
+        (Types::Int(i), Types::Int(val)) => s.variable_stack[i as usize].1.push(Types::Int(val)),
+        (Types::Int(i), Types::Long(val)) => s.variable_stack[i as usize].1.push(Types::Long(val)),
+        (Types::Int(i), Types::Float(val)) => {
+            s.variable_stack[i as usize].1.push(Types::Float(val))
+        }
+        (Types::Int(i), Types::Double(val)) => {
+            s.variable_stack[i as usize].1.push(Types::Double(val))
+        }
+        (Types::Int(i), Types::Byte(val)) => s.variable_stack[i as usize].1.push(Types::Byte(val)),
+        (Types::Int(i), Types::Str(val)) => s.variable_stack[i as usize].1.push(Types::Str(val)),
+        _ => return Err(INVALID_TYPE_ERROR.to_string()),
+    }
+
+    Ok("".to_string())
+}
+
+fn pop_word(s: &mut Engine) -> Result<String, String> {
+    let var_index = s.main_stack.pop();
+
+    if var_index.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    match var_index.unwrap() {
+        Types::Int(i) => {
+            let poped_val = s.variable_stack[i as usize].1.pop();
+
+            if poped_val.is_none() {
+                return Err(STACK_UNDERFLOW_ERROR.to_string());
+            }
+
+            s.main_stack.push(poped_val.unwrap());
+        }
+        _ => return Err(INVALID_TYPE_ERROR.to_string()),
+    }
+
     Ok("".to_string())
 }
 

@@ -8,6 +8,7 @@ pub struct Engine {
 
     pub main_stack: Vec<Types>,
 
+    pub variable_stack: Vec<(String, Vec<Types>)>,
     pub conditional_stack: Vec<i8>,
     pub loop_stack: Vec<(i32, i32)>,
 
@@ -47,6 +48,7 @@ impl Engine {
             loop_stack: Vec::new(),
             curr_line_vec: Vec::new(),
             curr_word_idx: -1,
+            variable_stack: Vec::new(),
         }
     }
 
