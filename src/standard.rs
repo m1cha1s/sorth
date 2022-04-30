@@ -50,6 +50,7 @@ impl WordList for Standard {
                 (|s| s.get_curr_word().starts_with("@"), get_var_addr_word),
                 (|s| s.get_curr_word() == "push", push_word),
                 (|s| s.get_curr_word() == "pop", pop_word),
+                (|s| s.get_curr_word() == "get", get_from_index_word),
                 // Rest of words
                 (|s| s.get_curr_word() == "+", add),
                 (|s| s.get_curr_word() == "-", subtract),
@@ -253,6 +254,66 @@ fn pop_word(s: &mut Engine) -> Result<String, String> {
 
             s.main_stack.push(poped_val.unwrap());
         }
+        _ => return Err(INVALID_TYPE_ERROR.to_string()),
+    }
+
+    Ok("".to_string())
+}
+
+fn get_from_index_word(s: &mut Engine) -> Result<String, String> {
+    let index = s.main_stack.pop();
+    let var_index = s.main_stack.pop();
+
+    if index.is_none() || var_index.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    match (var_index.unwrap(), index.unwrap()) {
+        (Types::Int(i), Types::Int(index)) => s
+            .main_stack
+            .push(s.variable_stack[i as usize].1[index as usize].clone()),
+        (Types::Int(i), Types::Long(index)) => s
+            .main_stack
+            .push(s.variable_stack[i as usize].1[index as usize].clone()),
+        (Types::Int(i), Types::Float(index)) => s
+            .main_stack
+            .push(s.variable_stack[i as usize].1[index as usize].clone()),
+        (Types::Int(i), Types::Double(index)) => s
+            .main_stack
+            .push(s.variable_stack[i as usize].1[index as usize].clone()),
+        (Types::Int(i), Types::Byte(index)) => s
+            .main_stack
+            .push(s.variable_stack[i as usize].1[index as usize].clone()),
+        _ => return Err(INVALID_TYPE_ERROR.to_string()),
+    }
+
+    Ok("".to_string())
+}
+fn set_in_index_word(s: &mut Engine) -> Result<String, String> {
+    let val = s.main_stack.pop();
+    let index = s.main_stack.pop();
+    let var_index = s.main_stack.pop();
+
+    if index.is_none() || var_index.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    match (var_index.unwrap(), index.unwrap()) {
+        (Types::Int(i), Types::Int(index)) => s
+            .main_stack
+            .push(s.variable_stack[i as usize].1[index as usize].clone()),
+        (Types::Int(i), Types::Long(index)) => s
+            .main_stack
+            .push(s.variable_stack[i as usize].1[index as usize].clone()),
+        (Types::Int(i), Types::Float(index)) => s
+            .main_stack
+            .push(s.variable_stack[i as usize].1[index as usize].clone()),
+        (Types::Int(i), Types::Double(index)) => s
+            .main_stack
+            .push(s.variable_stack[i as usize].1[index as usize].clone()),
+        (Types::Int(i), Types::Byte(index)) => s
+            .main_stack
+            .push(s.variable_stack[i as usize].1[index as usize].clone()),
         _ => return Err(INVALID_TYPE_ERROR.to_string()),
     }
 
@@ -589,12 +650,9 @@ fn subtract(s: &mut Engine) -> Result<String, String> {
 
 fn multiply(s: &mut Engine) -> Result<String, String> {
     let x = s.main_stack.pop();
-    if x.is_none() {
-        return Err(STACK_UNDERFLOW_ERROR.to_string());
-    }
-
     let y = s.main_stack.pop();
-    if y.is_none() {
+
+    if x.is_none() || y.is_none() {
         return Err(STACK_UNDERFLOW_ERROR.to_string());
     }
 
@@ -833,7 +891,10 @@ fn run_compiled(s: &mut Engine) -> Result<String, String> {
 
     for _ in 0..s.get_curr_word().len() {
         word_copy.remove(0);
+        // println!("{}", word_copy);
     }
+
+    // println!("{}", s.curr_word_idx);
 
     s.compiled_exec = true;
     let ret = s.eval(word_copy);

@@ -47,7 +47,7 @@ impl Engine {
             conditional_stack: Vec::new(),
             loop_stack: Vec::new(),
             curr_line_vec: Vec::new(),
-            curr_word_idx: -1,
+            curr_word_idx: 0,
             variable_stack: Vec::new(),
         }
     }
@@ -62,15 +62,27 @@ impl Engine {
     pub fn eval(&mut self, line: String) -> Result<String, String> {
         let mut out_buffer = String::new();
 
-        self.curr_line_vec = line.split_whitespace().map(|w| w.to_string()).collect();
-        self.curr_word_idx = -1;
+        if !self.compiled_exec {
+            self.curr_word_idx = 0;
+        }
 
-        while self.curr_word_idx + 1 < self.curr_line_vec.len() as i32 {
+        let split_line = line.split_whitespace().map(|w| w.to_string());
+        for word in split_line.clone().enumerate() {
+            self.curr_line_vec
+                .insert(self.curr_word_idx as usize + word.0, word.1);
+        }
+
+        if self.compiled_exec {
+            let line_vec: Vec<String> = split_line.collect();
+            self.curr_line_vec
+                .remove(self.curr_word_idx as usize + line_vec.len());
+        }
+
+        while self.curr_word_idx < self.curr_line_vec.len() as i32 {
             if !out_buffer.ends_with(" ") {
                 out_buffer.push_str(" ");
             }
 
-            self.curr_word_idx += 1;
             match self.mode {
                 EngineMode::NORMAL => {
                     let word_def = self.normal_words.iter().find(|&w| w.0(self));
@@ -79,6 +91,7 @@ impl Engine {
                         match res {
                             Ok(ok) => {
                                 out_buffer += ok.as_str();
+                                self.curr_word_idx += 1;
                                 continue;
                             }
                             Err(err) => return Err(err),
@@ -92,6 +105,7 @@ impl Engine {
                         match res {
                             Ok(ok) => {
                                 out_buffer += ok.as_str();
+                                self.curr_word_idx += 1;
                                 continue;
                             }
                             Err(err) => return Err(err),
@@ -105,6 +119,7 @@ impl Engine {
                         match res {
                             Ok(ok) => {
                                 out_buffer += ok.as_str();
+                                self.curr_word_idx += 1;
                                 continue;
                             }
                             Err(err) => return Err(err),
@@ -118,6 +133,7 @@ impl Engine {
                         match res {
                             Ok(ok) => {
                                 out_buffer += ok.as_str();
+                                self.curr_word_idx += 1;
                                 continue;
                             }
                             Err(err) => return Err(err),
@@ -132,6 +148,7 @@ impl Engine {
 
         if !self.compiled_exec {
             out_buffer.push_str(" Ok.\n");
+            self.curr_line_vec.drain(..);
         }
 
         Ok(out_buffer)
