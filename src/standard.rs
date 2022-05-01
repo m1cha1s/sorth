@@ -84,7 +84,9 @@ impl WordList for Standard {
                 (|s| s.get_curr_word().parse::<i32>().is_ok(), int_number),
                 (
                     |s: &Engine| {
-                        s.get_curr_word().parse::<i64>().is_ok()
+                        let mut word = s.get_curr_word();
+                        word.pop();
+                        word.parse::<i64>().is_ok()
                             && s.get_curr_word().to_lowercase().ends_with("l")
                     },
                     long_number,
@@ -142,7 +144,9 @@ fn int_number(s: &mut Engine) -> Result<String, String> {
 }
 
 fn long_number(s: &mut Engine) -> Result<String, String> {
-    let number = s.get_curr_word().parse::<i64>().unwrap();
+    let mut word = s.get_curr_word();
+    word.pop();
+    let number = word.parse::<i64>().unwrap();
     s.main_stack.push(Types::Long(number));
     Ok("".to_string())
 }

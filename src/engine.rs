@@ -24,6 +24,7 @@ pub struct Engine {
     pub see_words: Vec<Word>,
 }
 
+#[derive(PartialEq)]
 pub enum EngineMode {
     NORMAL,
     COMPILE,
@@ -139,7 +140,7 @@ impl Engine {
             return Err(err_val);
         }
 
-        if !self.compiled_exec {
+        if !self.compiled_exec && self.mode == EngineMode::NORMAL {
             out_buffer.push_str(" Ok.\n");
         }
 

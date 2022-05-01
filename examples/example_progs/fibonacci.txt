@@ -1,0 +1,11 @@
+: fib
+    0
+    for
+    dup 
+    rot
+    +
+    peek
+    next
+;
+
+0l 1l 10 fib
