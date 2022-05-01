@@ -15,13 +15,12 @@ pub struct Engine {
     pub curr_line_vec: Vec<Vec<String>>,
     pub curr_word_idx: Vec<i32>,
 
+    pub string_buffer: String,
+
     pub new_compiled_word: String,
     pub compiled_words: Vec<String>,
 
-    pub normal_words: Vec<Word>,
-    pub compile_words: Vec<Word>,
-    pub comment_words: Vec<Word>,
-    pub see_words: Vec<Word>,
+    pub words: Vec<Word>,
 }
 
 #[derive(PartialEq)]
@@ -30,6 +29,7 @@ pub enum EngineMode {
     COMPILE,
     SEE,
     COMMENT,
+    STRING,
 }
 
 impl Engine {
@@ -40,24 +40,19 @@ impl Engine {
             main_stack: Vec::new(),
             new_compiled_word: String::new(),
             compiled_words: Vec::new(),
-            normal_words: Vec::new(),
-            compile_words: Vec::new(),
-            comment_words: Vec::new(),
-            see_words: Vec::new(),
+            words: Vec::new(),
             compiled_exec: false,
             conditional_stack: Vec::new(),
             loop_stack: Vec::new(),
             curr_line_vec: Vec::new(),
             curr_word_idx: Vec::new(),
             variable_stack: Vec::new(),
+            string_buffer: String::new(),
         }
     }
 
     pub fn import_word_list(&mut self, word_list: impl WordList) {
-        self.normal_words.append(&mut word_list.get_normal());
-        self.compile_words.append(&mut word_list.get_compile());
-        self.comment_words.append(&mut word_list.get_comment());
-        self.see_words.append(&mut word_list.get_see());
+        self.words.append(&mut word_list.get_words());
     }
 
     pub fn eval(&mut self, line: String) -> Result<String, String> {
@@ -77,60 +72,18 @@ impl Engine {
 
             *self.curr_word_idx.last_mut().unwrap() += 1;
 
-            match self.mode {
-                EngineMode::NORMAL => {
-                    let word_def = self.normal_words.iter().find(|&w| w.0(self));
-                    if word_def.is_some() {
-                        let res = word_def.unwrap().1(self);
-                        match res {
-                            Ok(ok) => {
-                                out_buffer += ok.as_str().trim();
-                                continue;
-                            }
-                            Err(err) => return Err(err),
-                        }
+            let word_def = self.words.iter().find(|&w| w.0(self));
+            if word_def.is_some() {
+                let res = word_def.unwrap().1(self);
+                match res {
+                    Ok(ok) => {
+                        out_buffer += ok.as_str().trim();
+                        continue;
                     }
-                }
-                EngineMode::COMPILE => {
-                    let word_def = self.compile_words.iter().find(|&w| w.0(self));
-                    if word_def.is_some() {
-                        let res = word_def.unwrap().1(self);
-                        match res {
-                            Ok(ok) => {
-                                out_buffer += ok.as_str().trim();
-                                continue;
-                            }
-                            Err(err) => return Err(err),
-                        }
-                    }
-                }
-                EngineMode::SEE => {
-                    let word_def = self.see_words.iter().find(|&w| w.0(self));
-                    if word_def.is_some() {
-                        let res = word_def.unwrap().1(self);
-                        match res {
-                            Ok(ok) => {
-                                out_buffer += ok.as_str().trim();
-                                continue;
-                            }
-                            Err(err) => return Err(err),
-                        }
-                    }
-                }
-                EngineMode::COMMENT => {
-                    let word_def = self.comment_words.iter().find(|&w| w.0(self));
-                    if word_def.is_some() {
-                        let res = word_def.unwrap().1(self);
-                        match res {
-                            Ok(ok) => {
-                                out_buffer += ok.as_str().trim();
-                                continue;
-                            }
-                            Err(err) => return Err(err),
-                        }
-                    }
+                    Err(err) => return Err(err),
                 }
             }
+
             let err_val = UNKNOWN_WORD_ERROR.to_string()
                 + self.curr_line_vec.last().unwrap()
                     [*self.curr_word_idx.last_mut().unwrap() as usize]
@@ -158,5 +111,21 @@ impl Engine {
         }
 
         self.curr_line_vec.last().unwrap()[*self.curr_word_idx.last().unwrap() as usize].clone()
+    }
+
+    pub fn mode_normal(&self) -> bool {
+        self.mode == EngineMode::NORMAL
+    }
+    pub fn mode_compile(&self) -> bool {
+        self.mode == EngineMode::COMPILE
+    }
+    pub fn mode_comment(&self) -> bool {
+        self.mode == EngineMode::COMMENT
+    }
+    pub fn mode_see(&self) -> bool {
+        self.mode == EngineMode::SEE
+    }
+    pub fn mode_string(&self) -> bool {
+        self.mode == EngineMode::STRING
     }
 }
