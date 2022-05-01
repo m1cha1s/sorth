@@ -21,6 +21,46 @@ fn math_ops() {
 }
 
 #[test]
+fn logic_ops() {
+    let mut engine = Engine::new();
+
+    let std_words = Standard::new();
+
+    engine.import_word_list(std_words);
+
+    let line = "2 3 > . 2 3 < . 4 2 != . 1 1 == .".to_string();
+
+    let mut output = String::new();
+
+    match engine.eval(line) {
+        Ok(ok) => output += ok.trim(),
+        Err(err) => output += err.trim(),
+    }
+
+    assert_eq!(output.as_str(), "-1 0 -1 -1 Ok.");
+}
+
+#[test]
+fn stack_ops() {
+    let mut engine = Engine::new();
+
+    let std_words = Standard::new();
+
+    engine.import_word_list(std_words);
+
+    let line = "2 dup . . 2 3 2dup . . . . 4 2 swap . . 1 2 3 rot . . . 7 peek .".to_string();
+
+    let mut output = String::new();
+
+    match engine.eval(line) {
+        Ok(ok) => output += ok.trim(),
+        Err(err) => output += err.trim(),
+    }
+
+    assert_eq!(output.as_str(), "2 2 3 2 3 2 4 2 1 3 2 7 7 Ok.");
+}
+
+#[test]
 fn custom_words() {
     let mut engine = Engine::new();
 
