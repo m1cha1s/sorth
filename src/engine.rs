@@ -1,4 +1,4 @@
-use crate::prelude::{Types, Word, WordList};
+use crate::prelude::{Types, Word, WordList, UNKNOWN_WORD_ERROR};
 
 pub struct Engine {
     pub running: bool,
@@ -12,8 +12,8 @@ pub struct Engine {
     pub conditional_stack: Vec<i8>,
     pub loop_stack: Vec<(i32, i32)>,
 
-    pub curr_line_vec: Vec<String>,
-    pub curr_word_idx: i32,
+    pub curr_line_vec: Vec<Vec<String>>,
+    pub curr_word_idx: Vec<i32>,
 
     pub new_compiled_word: String,
     pub compiled_words: Vec<String>,
@@ -47,7 +47,7 @@ impl Engine {
             conditional_stack: Vec::new(),
             loop_stack: Vec::new(),
             curr_line_vec: Vec::new(),
-            curr_word_idx: 0,
+            curr_word_idx: Vec::new(),
             variable_stack: Vec::new(),
         }
     }
@@ -62,26 +62,19 @@ impl Engine {
     pub fn eval(&mut self, line: String) -> Result<String, String> {
         let mut out_buffer = String::new();
 
-        if !self.compiled_exec {
-            self.curr_word_idx = 0;
-        }
+        self.curr_word_idx.push(-1);
 
-        let split_line = line.split_whitespace().map(|w| w.to_string());
-        for word in split_line.clone().enumerate() {
-            self.curr_line_vec
-                .insert(self.curr_word_idx as usize + word.0, word.1);
-        }
+        self.curr_line_vec
+            .push(line.split_whitespace().map(|w| w.to_string()).collect());
 
-        if self.compiled_exec {
-            let line_vec: Vec<String> = split_line.collect();
-            self.curr_line_vec
-                .remove(self.curr_word_idx as usize + line_vec.len());
-        }
-
-        while self.curr_word_idx < self.curr_line_vec.len() as i32 {
+        while *self.curr_word_idx.last_mut().unwrap() + 1
+            < self.curr_line_vec.last().unwrap().len() as i32
+        {
             if !out_buffer.ends_with(" ") {
                 out_buffer.push_str(" ");
             }
+
+            *self.curr_word_idx.last_mut().unwrap() += 1;
 
             match self.mode {
                 EngineMode::NORMAL => {
@@ -90,8 +83,7 @@ impl Engine {
                         let res = word_def.unwrap().1(self);
                         match res {
                             Ok(ok) => {
-                                out_buffer += ok.as_str();
-                                self.curr_word_idx += 1;
+                                out_buffer += ok.as_str().trim();
                                 continue;
                             }
                             Err(err) => return Err(err),
@@ -104,8 +96,7 @@ impl Engine {
                         let res = word_def.unwrap().1(self);
                         match res {
                             Ok(ok) => {
-                                out_buffer += ok.as_str();
-                                self.curr_word_idx += 1;
+                                out_buffer += ok.as_str().trim();
                                 continue;
                             }
                             Err(err) => return Err(err),
@@ -118,8 +109,7 @@ impl Engine {
                         let res = word_def.unwrap().1(self);
                         match res {
                             Ok(ok) => {
-                                out_buffer += ok.as_str();
-                                self.curr_word_idx += 1;
+                                out_buffer += ok.as_str().trim();
                                 continue;
                             }
                             Err(err) => return Err(err),
@@ -132,8 +122,7 @@ impl Engine {
                         let res = word_def.unwrap().1(self);
                         match res {
                             Ok(ok) => {
-                                out_buffer += ok.as_str();
-                                self.curr_word_idx += 1;
+                                out_buffer += ok.as_str().trim();
                                 continue;
                             }
                             Err(err) => return Err(err),
@@ -141,24 +130,32 @@ impl Engine {
                     }
                 }
             }
-
-            return Err("Error unknown word: ".to_string()
-                + self.curr_line_vec[self.curr_word_idx as usize].as_str());
+            let err_val = UNKNOWN_WORD_ERROR.to_string()
+                + self.curr_line_vec.last().unwrap()
+                    [*self.curr_word_idx.last_mut().unwrap() as usize]
+                    .as_str();
+            self.curr_line_vec.pop();
+            self.curr_word_idx.pop();
+            return Err(err_val);
         }
 
         if !self.compiled_exec {
             out_buffer.push_str(" Ok.\n");
-            self.curr_line_vec.drain(..);
         }
+
+        self.curr_line_vec.pop();
+        self.curr_word_idx.pop();
 
         Ok(out_buffer)
     }
 
     pub fn get_curr_word(&self) -> String {
-        if self.curr_word_idx < 0 || self.curr_word_idx > self.curr_line_vec.len() as i32 {
+        if *self.curr_word_idx.last().unwrap() < 0
+            || *self.curr_word_idx.last().unwrap() > self.curr_line_vec.last().unwrap().len() as i32
+        {
             return "".to_string();
         }
 
-        self.curr_line_vec[self.curr_word_idx as usize].clone()
+        self.curr_line_vec.last().unwrap()[*self.curr_word_idx.last().unwrap() as usize].clone()
     }
 }

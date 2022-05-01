@@ -1,5 +1,5 @@
 use crate::{
-    errors::{INVALID_TYPE_ERROR, STACK_UNDERFLOW_ERROR},
+    errors::{INVALID_TYPE_ERROR, STACK_UNDERFLOW_ERROR, VARIABLE_INDEX_OUT_OR_RANGE_ERROR},
     prelude::{Engine, EngineMode, Types, Word, WordList},
 };
 
@@ -51,6 +51,7 @@ impl WordList for Standard {
                 (|s| s.get_curr_word() == "push", push_word),
                 (|s| s.get_curr_word() == "pop", pop_word),
                 (|s| s.get_curr_word() == "get", get_from_index_word),
+                (|s| s.get_curr_word() == "set", set_in_index_word),
                 // Rest of words
                 (|s| s.get_curr_word() == "+", add),
                 (|s| s.get_curr_word() == "-", subtract),
@@ -173,7 +174,7 @@ fn byte_number(s: &mut Engine) -> Result<String, String> {
 // Variable logic
 
 fn let_word(s: &mut Engine) -> Result<String, String> {
-    s.curr_word_idx += 1;
+    *s.curr_word_idx.last_mut().unwrap() += 1;
 
     let potential_existing = s
         .variable_stack
@@ -181,9 +182,8 @@ fn let_word(s: &mut Engine) -> Result<String, String> {
         .enumerate()
         .find(|&v| (v.1).0 == s.get_curr_word());
 
-    let mut index = 0;
     if potential_existing.is_some() {
-        index = potential_existing.unwrap().0;
+        let index = potential_existing.unwrap().0;
         s.variable_stack.remove(index);
     }
 
@@ -298,22 +298,49 @@ fn set_in_index_word(s: &mut Engine) -> Result<String, String> {
         return Err(STACK_UNDERFLOW_ERROR.to_string());
     }
 
-    match (var_index.unwrap(), index.unwrap()) {
-        (Types::Int(i), Types::Int(index)) => s
-            .main_stack
-            .push(s.variable_stack[i as usize].1[index as usize].clone()),
-        (Types::Int(i), Types::Long(index)) => s
-            .main_stack
-            .push(s.variable_stack[i as usize].1[index as usize].clone()),
-        (Types::Int(i), Types::Float(index)) => s
-            .main_stack
-            .push(s.variable_stack[i as usize].1[index as usize].clone()),
-        (Types::Int(i), Types::Double(index)) => s
-            .main_stack
-            .push(s.variable_stack[i as usize].1[index as usize].clone()),
-        (Types::Int(i), Types::Byte(index)) => s
-            .main_stack
-            .push(s.variable_stack[i as usize].1[index as usize].clone()),
+    match (var_index.unwrap(), index.unwrap(), val.unwrap()) {
+        (Types::Int(var_idx), Types::Int(idx), Types::Int(a)) => {
+            if idx + 1 > s.variable_stack[var_idx as usize].1.len() as i32 {
+                return Err(VARIABLE_INDEX_OUT_OR_RANGE_ERROR.to_string());
+            }
+
+            s.variable_stack[var_idx as usize].1[idx as usize] = Types::Int(a);
+        }
+        (Types::Int(var_idx), Types::Int(idx), Types::Long(a)) => {
+            if idx + 1 > s.variable_stack[var_idx as usize].1.len() as i32 {
+                return Err(VARIABLE_INDEX_OUT_OR_RANGE_ERROR.to_string());
+            }
+
+            s.variable_stack[var_idx as usize].1[idx as usize] = Types::Long(a);
+        }
+        (Types::Int(var_idx), Types::Int(idx), Types::Float(a)) => {
+            if idx + 1 > s.variable_stack[var_idx as usize].1.len() as i32 {
+                return Err(VARIABLE_INDEX_OUT_OR_RANGE_ERROR.to_string());
+            }
+
+            s.variable_stack[var_idx as usize].1[idx as usize] = Types::Float(a);
+        }
+        (Types::Int(var_idx), Types::Int(idx), Types::Double(a)) => {
+            if idx + 1 > s.variable_stack[var_idx as usize].1.len() as i32 {
+                return Err(VARIABLE_INDEX_OUT_OR_RANGE_ERROR.to_string());
+            }
+
+            s.variable_stack[var_idx as usize].1[idx as usize] = Types::Double(a);
+        }
+        (Types::Int(var_idx), Types::Int(idx), Types::Byte(a)) => {
+            if idx + 1 > s.variable_stack[var_idx as usize].1.len() as i32 {
+                return Err(VARIABLE_INDEX_OUT_OR_RANGE_ERROR.to_string());
+            }
+
+            s.variable_stack[var_idx as usize].1[idx as usize] = Types::Byte(a);
+        }
+        (Types::Int(var_idx), Types::Int(idx), Types::Str(a)) => {
+            if idx + 1 > s.variable_stack[var_idx as usize].1.len() as i32 {
+                return Err(VARIABLE_INDEX_OUT_OR_RANGE_ERROR.to_string());
+            }
+
+            s.variable_stack[var_idx as usize].1[idx as usize] = Types::Str(a);
+        }
         _ => return Err(INVALID_TYPE_ERROR.to_string()),
     }
 
@@ -337,7 +364,7 @@ fn do_word(s: &mut Engine) -> Result<String, String> {
             if x == 0 {
                 let mut controll = 1;
                 while controll != 0 {
-                    s.curr_word_idx += 1;
+                    *s.curr_word_idx.last_mut().unwrap() += 1;
 
                     match s.get_curr_word().as_str() {
                         "while" => controll += 1,
@@ -356,7 +383,7 @@ fn do_word(s: &mut Engine) -> Result<String, String> {
 fn again_word(s: &mut Engine) -> Result<String, String> {
     let mut controll = 1;
     while controll > 0 {
-        s.curr_word_idx -= 1;
+        *s.curr_word_idx.last_mut().unwrap() -= 1;
 
         match s.get_curr_word().as_str() {
             "while" => controll -= 1,
@@ -410,7 +437,7 @@ fn next_word(s: &mut Engine) -> Result<String, String> {
     if curr_loop_contents.1 < curr_loop_contents.0 {
         let mut cntr = 1;
         while cntr != 0 {
-            s.curr_word_idx -= 1;
+            *s.curr_word_idx.last_mut().unwrap() -= 1;
 
             if s.get_curr_word() == "next" || s.get_curr_word() == "bynext" {
                 cntr += 1;
@@ -452,7 +479,7 @@ fn bynext_word(s: &mut Engine) -> Result<String, String> {
     if curr_loop_contents.1 < curr_loop_contents.0 {
         let mut cntr = 1;
         while cntr != 0 {
-            s.curr_word_idx -= 1;
+            *s.curr_word_idx.last_mut().unwrap() -= 1;
 
             if s.get_curr_word() == "next" || s.get_curr_word() == "bynext" {
                 cntr += 1;
@@ -891,10 +918,7 @@ fn run_compiled(s: &mut Engine) -> Result<String, String> {
 
     for _ in 0..s.get_curr_word().len() {
         word_copy.remove(0);
-        // println!("{}", word_copy);
     }
-
-    // println!("{}", s.curr_word_idx);
 
     s.compiled_exec = true;
     let ret = s.eval(word_copy);
