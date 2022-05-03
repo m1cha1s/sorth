@@ -99,3 +99,43 @@ fn variables() {
 
     assert_eq!(output.as_str(), "5 6 9 Ok.");
 }
+
+#[test]
+fn strings() {
+    let mut engine = Engine::new();
+
+    let std_words = Standard::new();
+
+    engine.import_word_list(std_words);
+
+    let line = "\" hello \" \" world \" 2dup + peek wsplit . . concat .".to_string();
+
+    let mut output = String::new();
+
+    match engine.eval(line) {
+        Ok(ok) => output += ok.trim(),
+        Err(err) => output += err.trim(),
+    }
+
+    assert_eq!(output.as_str(), "hello world world hello helloworld Ok.");
+}
+
+#[test]
+fn type_conversion() {
+    let mut engine = Engine::new();
+
+    let std_words = Standard::new();
+
+    engine.import_word_list(std_words);
+
+    let line = "17 to_long peek to_float peek to_double peek to_byte peek to_str .".to_string();
+
+    let mut output = String::new();
+
+    match engine.eval(line) {
+        Ok(ok) => output += ok.trim(),
+        Err(err) => output += err.trim(),
+    }
+
+    assert_eq!(output.as_str(), "17 17 17 17 17 Ok.");
+}

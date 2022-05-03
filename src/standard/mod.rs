@@ -5,6 +5,7 @@ mod math_ops;
 mod miscellaneus_ops;
 mod stack_ops;
 mod string_ops;
+mod type_ops;
 mod value_ops;
 mod variable_ops;
 mod word_ops;
@@ -18,7 +19,10 @@ use self::{
     math_ops::{add, divide, multiply, subtract},
     miscellaneus_ops::bye,
     stack_ops::{dot, drop_word, dup, peek, rot, swap_word, two_dup},
-    string_ops::{string_creation, string_mode_toggle},
+    string_ops::{
+        string_concat, string_creation, string_mode_toggle, string_split, string_split_whitespace,
+    },
+    type_ops::{to_int, to_string, to_byte, to_double, to_float, to_long},
     value_ops::{byte_number, double_number, float_number, int_number, long_number},
     variable_ops::{
         get_from_index_word, get_var_addr_word, let_word, pop_word, push_word, set_in_index_word,
@@ -139,6 +143,41 @@ impl WordList for Standard {
                     run_compiled,
                 ),
                 (|s| s.get_curr_word() == "bye" && s.mode_normal(), bye),
+                // Type ops
+                (|s| s.get_curr_word() == "to_int" && s.mode_normal(), to_int),
+                (
+                    |s| s.get_curr_word() == "to_long" && s.mode_normal(),
+                    to_long,
+                ),
+                (
+                    |s| s.get_curr_word() == "to_float" && s.mode_normal(),
+                    to_float,
+                ),
+                (
+                    |s| s.get_curr_word() == "to_double" && s.mode_normal(),
+                    to_double,
+                ),
+                (
+                    |s| s.get_curr_word() == "to_byte" && s.mode_normal(),
+                    to_byte,
+                ),
+                (
+                    |s| s.get_curr_word() == "to_str" && s.mode_normal(),
+                    to_string,
+                ),
+                // String ops
+                (
+                    |s| s.get_curr_word() == "concat" && s.mode_normal(),
+                    string_concat,
+                ),
+                (
+                    |s| s.get_curr_word() == "split" && s.mode_normal(),
+                    string_split,
+                ),
+                (
+                    |s| s.get_curr_word() == "wsplit" && s.mode_normal(),
+                    string_split_whitespace,
+                ),
                 // Read string
                 (
                     |s| {
