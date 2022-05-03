@@ -10,10 +10,10 @@ use sorth::prelude::*;
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    let mut file_name = "./examples/example_progs/sorth_test_prog.txt";
+    let mut file_name = "./examples/example_progs/sorth_test_prog.sorth";
     if args.len() > 1 {
         file_name = match args[1].as_str() {
-            "fibonacci" => "./examples/example_progs/fibonacci.txt",
+            "fibonacci" => "./examples/example_progs/fibonacci.sorth",
             name => name,
         }
     }
