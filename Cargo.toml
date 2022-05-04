@@ -3,4 +3,9 @@ name = "sorth"
 version = "0.1.0"
 edition = "2021"
 
+repository = "https://github.com/m1cha1s/sorth"
+license-file = "LICENSE"
+
+keywords = ["Language", "Forth", "no_std"]
+
 [dependencies]
