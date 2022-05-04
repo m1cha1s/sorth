@@ -1,5 +1,7 @@
 # Sorth
 
+[![Tests](https://github.com/m1cha1s/sorth/actions/workflows/tests.yml/badge.svg)](https://github.com/m1cha1s/sorth/actions/workflows/tests.yml)
+
 This is a **Rust** based language interpreter inspired by FORTH. It's main features are that it's easily extensible and that it is no_std friendly only requiering global allocator.
 
 ## Language features
