@@ -10,7 +10,7 @@ license-file = "LICENSE"
 
 repository = "https://github.com/m1cha1s/sorth"
 documentation = ""
-homepage = ""
+homepage = "https://github.com/m1cha1s/sorth"
 description = """
 Forth inspired interpreted programming language.
 """
