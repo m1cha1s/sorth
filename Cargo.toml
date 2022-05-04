@@ -9,7 +9,7 @@ readme = "README.md"
 license-file = "LICENSE"
 
 repository = "https://github.com/m1cha1s/sorth"
-documentation = ""
+documentation = "https://github.com/m1cha1s/sorth"
 homepage = "https://github.com/m1cha1s/sorth"
 description = """
 Forth inspired interpreted programming language.
