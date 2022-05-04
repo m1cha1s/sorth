@@ -3,9 +3,22 @@ name = "sorth"
 version = "0.1.0"
 edition = "2021"
 
-repository = "https://github.com/m1cha1s/sorth"
+authors = ["m1cha1s"]
+
+readme = "README.md"
+license = "MIT"
 license-file = "LICENSE"
 
+repository = "https://github.com/m1cha1s/sorth"
+documentation = ""
+homepage = ""
+description = """
+Forth inspired interpreted programming language.
+"""
+
+include = ["src/", "LICENSE", "README.md"]
+
+categories = ["no-std"]
 keywords = ["Language", "Forth", "no_std"]
 
 [dependencies]
