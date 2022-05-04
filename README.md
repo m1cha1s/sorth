@@ -12,6 +12,8 @@ Push value to the stack:
 12.0f // float
 2l // long 
 0x23 // byte
+
+" hello    world " // Note. This will be interpreted as " hello world ". This is the limitation of the interpreters architecture
 ```
 
 Math funcitions:
@@ -23,15 +25,19 @@ Math funcitions:
 12 24 + . // 36 Ok.
 ```
 
-Logic operators:
+Logic operators and comparisons:
 ```
-== // equal
-!= // not equal
->  // higher
-<  // Lower
+and // logic and
+or  // logic or
+not // logic not
 
--1 // true
-0  // false
+==  // equal
+!=  // not equal
+>   // higher
+<   // Lower
+
+-1  // true
+0   // false
 ```
 
 Stack manipulation functions:

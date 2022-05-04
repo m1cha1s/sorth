@@ -155,6 +155,34 @@ pub fn or(s: &mut Engine) -> Result<String, String> {
     Ok("".to_string())
 }
 
+pub fn not(s: &mut Engine) -> Result<String, String> {
+    let a = s.main_stack.pop();
+
+    if a.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    let result: bool = match a.unwrap() {
+        Types::Int(a) => {
+            if a == -1 {
+                false
+            } else {
+                true
+            }
+        }
+
+        _ => return Err(INVALID_TYPE_ERROR.to_string()),
+    };
+
+    if result {
+        s.main_stack.push(Types::Int(-1));
+    } else {
+        s.main_stack.push(Types::Int(0));
+    }
+
+    Ok("".to_string())
+}
+
 pub fn grater_than(s: &mut Engine) -> Result<String, String> {
     let a = s.main_stack.pop();
     let b = s.main_stack.pop();

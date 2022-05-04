@@ -14,7 +14,7 @@ use crate::prelude::{Engine, Word, WordList};
 
 use self::{
     conditional_ops::{conditional_skip, current_cond, else_word, if_word, then_word},
-    logic_ops::{and, equal, grater_than, less_than, not_equal, or},
+    logic_ops::{and, equal, grater_than, less_than, not, not_equal, or},
     loop_ops::{again_word, bynext_word, do_word, for_word, i_word, next_word, while_word},
     math_ops::{add, divide, multiply, subtract},
     miscellaneus_ops::bye,
@@ -22,7 +22,7 @@ use self::{
     string_ops::{
         string_concat, string_creation, string_mode_toggle, string_split, string_split_whitespace,
     },
-    type_ops::{to_int, to_string, to_byte, to_double, to_float, to_long},
+    type_ops::{to_byte, to_double, to_float, to_int, to_long, to_string},
     value_ops::{byte_number, double_number, float_number, int_number, long_number},
     variable_ops::{
         get_from_index_word, get_var_addr_word, let_word, pop_word, push_word, set_in_index_word,
@@ -113,6 +113,7 @@ impl WordList for Standard {
                 (|s| s.get_curr_word() == "!=" && s.mode_normal(), not_equal),
                 (|s| s.get_curr_word() == "and" && s.mode_normal(), and),
                 (|s| s.get_curr_word() == "or" && s.mode_normal(), or),
+                (|s| s.get_curr_word() == "not" && s.mode_normal(), not),
                 (|s| s.get_curr_word() == ">" && s.mode_normal(), grater_than),
                 (|s| s.get_curr_word() == "<" && s.mode_normal(), less_than),
                 // Stack operations
