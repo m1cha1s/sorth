@@ -199,7 +199,7 @@ If you want to use sorth in the ```no_std``` ecosystem, then the only that you n
 - [ ] File access wordset
 - [ ] Sorth user input interface
 - [x] Rework sorth into library crate
-- [ ] Share on crates.io
+- [x] Share on crates.io
 
 ## License
 
