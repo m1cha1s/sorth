@@ -6,7 +6,6 @@ edition = "2021"
 authors = ["m1cha1s"]
 
 readme = "README.md"
-license = "MIT"
 license-file = "LICENSE"
 
 repository = "https://github.com/m1cha1s/sorth"
