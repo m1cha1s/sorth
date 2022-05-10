@@ -1,3 +1,4 @@
+mod comment_ops;
 mod conditional_ops;
 mod logic_ops;
 mod loop_ops;
@@ -13,7 +14,8 @@ mod word_ops;
 use crate::prelude::{Engine, Word, WordList};
 
 use self::{
-    conditional_ops::{conditional_skip, current_cond, else_word, if_word, then_word},
+    comment_ops::comment_toggle,
+    conditional_ops::{current_cond, else_word, if_word, skip, then_word},
     logic_ops::{and, equal, grater_than, less_than, not, not_equal, or},
     loop_ops::{again_word, bynext_word, do_word, for_word, i_word, next_word, while_word},
     math_ops::{add, divide, multiply, subtract},
@@ -25,7 +27,8 @@ use self::{
     type_ops::{to_byte, to_double, to_float, to_int, to_long, to_string},
     value_ops::{byte_number, double_number, float_number, int_number, long_number},
     variable_ops::{
-        get_from_index_word, get_var_addr_word, let_word, pop_word, push_word, set_in_index_word,
+        get_from_index_word, get_var_addr_word, len_word, let_word, pop_word, push_word,
+        set_in_index_word,
     },
     word_ops::{compile, end_compile, run_compiled, start_compile},
 };
@@ -38,6 +41,14 @@ impl WordList for Standard {
     fn new() -> Self {
         Standard {
             words: vec![
+                // Comments
+                (
+                    |s| {
+                        (s.get_curr_word() == "(" || s.get_curr_word() == ")")
+                            && (s.mode_normal() || s.mode_comment())
+                    },
+                    comment_toggle,
+                ),
                 // Conditional words
                 (
                     |s| s.get_curr_word() == "if" && s.compiled_exec && s.mode_normal(),
@@ -52,8 +63,8 @@ impl WordList for Standard {
                     then_word,
                 ),
                 (
-                    |s: &Engine| 1 != current_cond(s) && s.mode_normal(),
-                    conditional_skip,
+                    |s: &Engine| (1 != current_cond(s) && s.mode_normal()) || s.mode_comment(),
+                    skip,
                 ),
                 // Loop words
                 (
@@ -103,6 +114,7 @@ impl WordList for Standard {
                     |s| s.get_curr_word() == "set" && s.mode_normal(),
                     set_in_index_word,
                 ),
+                (|s| s.get_curr_word() == "len" && s.mode_normal(), len_word),
                 // Math operations
                 (|s| s.get_curr_word() == "+" && s.mode_normal(), add),
                 (|s| s.get_curr_word() == "-" && s.mode_normal(), subtract),

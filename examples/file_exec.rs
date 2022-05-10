@@ -14,6 +14,7 @@ fn main() {
     if args.len() > 1 {
         file_name = match args[1].as_str() {
             "fibonacci" => "./examples/example_progs/fibonacci.sorth",
+            "turing" => "./examples/example_progs/turing_machine.sorth",
             name => name,
         }
     }

@@ -1,5 +1,8 @@
 use crate::{
-    errors::{INVALID_TYPE_ERROR, STACK_UNDERFLOW_ERROR, VARIABLE_INDEX_OUT_OR_RANGE_ERROR},
+    errors::{
+        INVALID_TYPE_ERROR, STACK_UNDERFLOW_ERROR, VARIABLE_INDEX_OUT_OR_RANGE_ERROR,
+        VARIABLE_NOT_DEFINED,
+    },
     prelude::{Engine, Types},
 };
 
@@ -30,14 +33,14 @@ pub fn get_var_addr_word(s: &mut Engine) -> Result<String, String> {
         .variable_stack
         .iter()
         .enumerate()
-        .find(|&v| (v.1).0 == s.get_curr_word());
+        .find(|v| (v.1).0 == word);
 
-    let mut index: i32 = 0;
     if potential_existing.is_some() {
-        index = potential_existing.unwrap().0 as i32;
+        let index = potential_existing.unwrap().0 as i32;
+        s.main_stack.push(Types::Int(index));
+    } else {
+        return Err(VARIABLE_NOT_DEFINED.to_string());
     }
-
-    s.main_stack.push(Types::Int(index));
 
     Ok("".to_string())
 }
@@ -90,6 +93,25 @@ pub fn pop_word(s: &mut Engine) -> Result<String, String> {
     Ok("".to_string())
 }
 
+pub fn len_word(s: &mut Engine) -> Result<String, String> {
+    let var_index = s.main_stack.pop();
+
+    if var_index.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    match var_index.unwrap() {
+        Types::Int(i) => {
+            let var_len = s.variable_stack[i as usize].1.len();
+
+            s.main_stack.push(Types::Int(var_len as i32));
+        }
+        _ => return Err(INVALID_TYPE_ERROR.to_string()),
+    }
+
+    Ok("".to_string())
+}
+
 pub fn get_from_index_word(s: &mut Engine) -> Result<String, String> {
     let index = s.main_stack.pop();
     let var_index = s.main_stack.pop();
@@ -99,21 +121,41 @@ pub fn get_from_index_word(s: &mut Engine) -> Result<String, String> {
     }
 
     match (var_index.unwrap(), index.unwrap()) {
-        (Types::Int(i), Types::Int(index)) => s
-            .main_stack
-            .push(s.variable_stack[i as usize].1[index as usize].clone()),
-        (Types::Int(i), Types::Long(index)) => s
-            .main_stack
-            .push(s.variable_stack[i as usize].1[index as usize].clone()),
-        (Types::Int(i), Types::Float(index)) => s
-            .main_stack
-            .push(s.variable_stack[i as usize].1[index as usize].clone()),
-        (Types::Int(i), Types::Double(index)) => s
-            .main_stack
-            .push(s.variable_stack[i as usize].1[index as usize].clone()),
-        (Types::Int(i), Types::Byte(index)) => s
-            .main_stack
-            .push(s.variable_stack[i as usize].1[index as usize].clone()),
+        (Types::Int(i), Types::Int(index)) => {
+            if index as usize >= s.variable_stack[i as usize].1.len() {
+                return Err(VARIABLE_INDEX_OUT_OR_RANGE_ERROR.to_string());
+            }
+            s.main_stack
+                .push(s.variable_stack[i as usize].1[index as usize].clone());
+        }
+        (Types::Int(i), Types::Long(index)) => {
+            if index as usize >= s.variable_stack[i as usize].1.len() {
+                return Err(VARIABLE_INDEX_OUT_OR_RANGE_ERROR.to_string());
+            }
+            s.main_stack
+                .push(s.variable_stack[i as usize].1[index as usize].clone());
+        }
+        (Types::Int(i), Types::Float(index)) => {
+            if index as usize >= s.variable_stack[i as usize].1.len() {
+                return Err(VARIABLE_INDEX_OUT_OR_RANGE_ERROR.to_string());
+            }
+            s.main_stack
+                .push(s.variable_stack[i as usize].1[index as usize].clone());
+        }
+        (Types::Int(i), Types::Double(index)) => {
+            if index as usize >= s.variable_stack[i as usize].1.len() {
+                return Err(VARIABLE_INDEX_OUT_OR_RANGE_ERROR.to_string());
+            }
+            s.main_stack
+                .push(s.variable_stack[i as usize].1[index as usize].clone());
+        }
+        (Types::Int(i), Types::Byte(index)) => {
+            if index as usize >= s.variable_stack[i as usize].1.len() {
+                return Err(VARIABLE_INDEX_OUT_OR_RANGE_ERROR.to_string());
+            }
+            s.main_stack
+                .push(s.variable_stack[i as usize].1[index as usize].clone());
+        }
         _ => return Err(INVALID_TYPE_ERROR.to_string()),
     }
 

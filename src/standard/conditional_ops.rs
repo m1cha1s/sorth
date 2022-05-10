@@ -53,6 +53,6 @@ pub fn then_word(s: &mut Engine) -> Result<String, String> {
     Ok("".to_string())
 }
 
-pub fn conditional_skip(_s: &mut Engine) -> Result<String, String> {
+pub fn skip(_s: &mut Engine) -> Result<String, String> {
     Ok("".to_string())
 }
