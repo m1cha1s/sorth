@@ -71,7 +71,12 @@ let state_1
     get_current_state    
     ( Check if there is a condition )
     dup 0 get if
-        ( TODO ) bye
+        dup 1 get if 
+            dup 2 get execute_action
+            3 get @current_state 0 rot set
+        else
+            4 get @current_state 0 rot set
+        then
     else
         dup 2 get execute_action
         3 get @current_state 0 rot set
