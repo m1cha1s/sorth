@@ -17,7 +17,7 @@ use self::{
     logic_ops::{and, equal, grater_than, less_than, not, not_equal, or},
     loop_ops::{again_word, bynext_word, do_word, for_word, i_word, next_word, while_word},
     math_ops::{add, divide, multiply, subtract},
-    miscellaneus_ops::bye,
+    miscellaneus_ops::{bye, input, silent},
     stack_ops::{dot, drop_word, dup, peek, rot, swap_word, two_dup},
     string_ops::{
         string_concat, string_creation, string_mode_toggle, string_split, string_split_whitespace,
@@ -189,6 +189,10 @@ impl WordList for Standard {
                     string_mode_toggle,
                 ),
                 (|s| s.mode_string(), string_creation),
+                // Silent mode
+                (|s| s.mode_normal() && s.get_curr_word() == "silent", silent),
+                // Input
+                (|s| s.mode_normal() && s.get_curr_word() == "input", input),
                 // Read number
                 (
                     |s| s.get_curr_word().parse::<i32>().is_ok() && s.mode_normal(),

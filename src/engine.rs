@@ -2,6 +2,8 @@ use crate::prelude::{Types, Word, WordList, UNKNOWN_WORD_ERROR};
 
 pub struct Engine {
     pub running: bool,
+    pub waiting_for_input: bool,
+    pub silent: bool,
     pub compiled_exec: bool,
 
     pub mode: EngineMode,
@@ -48,6 +50,8 @@ impl Engine {
             curr_word_idx: Vec::new(),
             variable_stack: Vec::new(),
             string_buffer: String::new(),
+            waiting_for_input: false,
+            silent: false,
         }
     }
 
@@ -56,6 +60,16 @@ impl Engine {
     }
 
     pub fn eval(&mut self, line: String) -> Result<String, String> {
+        if self.waiting_for_input {
+            self.main_stack.push(Types::Str(line));
+            self.waiting_for_input = false;
+            if !self.silent {
+                return Ok("\nOk.\n".to_string());
+            } else {
+                return Ok("\n".to_string());
+            }
+        }
+
         let mut out_buffer = String::new();
 
         self.curr_word_idx.push(-1);
@@ -94,7 +108,11 @@ impl Engine {
         }
 
         if !self.compiled_exec && self.mode == EngineMode::NORMAL {
-            out_buffer.push_str(" Ok.\n");
+            if !self.silent {
+                out_buffer.push_str("\nOk.\n");
+            } else {
+                out_buffer.push_str("\n");
+            }
         }
 
         self.curr_line_vec.pop();
