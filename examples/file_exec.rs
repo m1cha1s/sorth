@@ -29,8 +29,8 @@ fn main() {
         for line_opt in lines {
             if let Ok(line) = line_opt {
                 match engine.eval(line) {
-                    Ok(ok) => print!("{}", ok.trim_start()),
-                    Err(err) => print!("Error: {}", err.trim_start()),
+                    Ok(ok) => print!("{}", ok.as_str()),
+                    Err(err) => print!("{}", err.trim_start()),
                 }
             }
         }

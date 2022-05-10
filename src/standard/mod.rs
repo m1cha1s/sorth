@@ -19,7 +19,7 @@ use self::{
     logic_ops::{and, equal, grater_than, less_than, not, not_equal, or},
     loop_ops::{again_word, bynext_word, do_word, for_word, i_word, next_word, while_word},
     math_ops::{add, divide, multiply, subtract},
-    miscellaneus_ops::{bye, input, silent},
+    miscellaneus_ops::{bye, input, nl, silent},
     stack_ops::{dot, drop_word, dup, peek, rot, swap_word, two_dup},
     string_ops::{
         string_concat, string_creation, string_mode_toggle, string_split, string_split_whitespace,
@@ -51,15 +51,15 @@ impl WordList for Standard {
                 ),
                 // Conditional words
                 (
-                    |s| s.get_curr_word() == "if" && s.compiled_exec && s.mode_normal(),
+                    |s| s.get_curr_word() == "if" && s.get_compiled_exec() && s.mode_normal(),
                     if_word,
                 ),
                 (
-                    |s| s.get_curr_word() == "else" && s.compiled_exec && s.mode_normal(),
+                    |s| s.get_curr_word() == "else" && s.get_compiled_exec() && s.mode_normal(),
                     else_word,
                 ),
                 (
-                    |s| s.get_curr_word() == "then" && s.compiled_exec && s.mode_normal(),
+                    |s| s.get_curr_word() == "then" && s.get_compiled_exec() && s.mode_normal(),
                     then_word,
                 ),
                 (
@@ -68,31 +68,31 @@ impl WordList for Standard {
                 ),
                 // Loop words
                 (
-                    |s| s.get_curr_word() == "for" && s.compiled_exec && s.mode_normal(),
+                    |s| s.get_curr_word() == "for" && s.get_compiled_exec() && s.mode_normal(),
                     for_word,
                 ),
                 (
-                    |s| s.get_curr_word() == "next" && s.compiled_exec && s.mode_normal(),
+                    |s| s.get_curr_word() == "next" && s.get_compiled_exec() && s.mode_normal(),
                     next_word,
                 ),
                 (
-                    |s| s.get_curr_word() == "bynext" && s.compiled_exec && s.mode_normal(),
+                    |s| s.get_curr_word() == "bynext" && s.get_compiled_exec() && s.mode_normal(),
                     bynext_word,
                 ),
                 (
-                    |s| s.get_curr_word() == "while" && s.compiled_exec && s.mode_normal(),
+                    |s| s.get_curr_word() == "while" && s.get_compiled_exec() && s.mode_normal(),
                     while_word,
                 ),
                 (
-                    |s| s.get_curr_word() == "do" && s.compiled_exec && s.mode_normal(),
+                    |s| s.get_curr_word() == "do" && s.get_compiled_exec() && s.mode_normal(),
                     do_word,
                 ),
                 (
-                    |s| s.get_curr_word() == "again" && s.compiled_exec && s.mode_normal(),
+                    |s| s.get_curr_word() == "again" && s.get_compiled_exec() && s.mode_normal(),
                     again_word,
                 ),
                 (
-                    |s| s.get_curr_word() == "i" && s.compiled_exec && s.mode_normal(),
+                    |s| s.get_curr_word() == "i" && s.get_compiled_exec() && s.mode_normal(),
                     i_word,
                 ),
                 // Variable words
@@ -156,6 +156,7 @@ impl WordList for Standard {
                     run_compiled,
                 ),
                 (|s| s.get_curr_word() == "bye" && s.mode_normal(), bye),
+                (|s| s.get_curr_word() == "nl" && s.mode_normal(), nl),
                 // Type ops
                 (|s| s.get_curr_word() == "to_int" && s.mode_normal(), to_int),
                 (

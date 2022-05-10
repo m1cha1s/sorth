@@ -49,9 +49,13 @@ pub fn run_compiled(s: &mut Engine) -> Result<String, String> {
         word_copy.remove(0);
     }
 
-    s.compiled_exec = true;
+    s.compiled_exec.push(true);
     let ret = s.eval(word_copy);
-    s.compiled_exec = false;
+    if s.compiled_exec.len() == 1 {
+        *s.compiled_exec.last_mut().unwrap() = false;
+    } else {
+        s.compiled_exec.pop();
+    }
 
     ret
 }

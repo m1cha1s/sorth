@@ -4,10 +4,8 @@ use crate::{
 };
 
 pub fn bye(s: &mut Engine) -> Result<String, String> {
-    if !s.compiled_exec {
+    if !s.get_compiled_exec() {
         s.running = false;
-    } else {
-        s.compiled_exec = false;
     }
     Ok("".to_string())
 }
@@ -41,4 +39,8 @@ pub fn input(s: &mut Engine) -> Result<String, String> {
         return Err(INVALID_TYPE_ERROR.to_string());
     }
     Err(STACK_UNDERFLOW_ERROR.to_string())
+}
+
+pub fn nl(_s: &mut Engine) -> Result<String, String> {
+    Ok("\n".to_string())
 }

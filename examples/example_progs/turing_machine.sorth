@@ -12,25 +12,26 @@
     - 7 -> P1,L
 
     ## Table structure
-    ----------------------------------------------------
-    |state            |This is a cell index            |
-    ----------------------------------------------------
-    |if condition     |This is eather -1/0             | 
-    ----------------------------------------------------
-    |condition        |Eather 1/0                      |
-    ----------------------------------------------------
-    |action           |An action code                  |
-    ----------------------------------------------------
-    |next state true  |State index if condition met    |
-    ----------------------------------------------------
-    |next state false |State index if condition failed |
-    ----------------------------------------------------
+    ------------------------------------------------------
+    | |state            |This is a cell index            |
+    ------------------------------------------------------
+    |0|if condition     |This is either -1/0             | 
+    ------------------------------------------------------
+    |1|condition        |Either 1/0                      |
+    ------------------------------------------------------
+    |2|action           |An action code                  |
+    ------------------------------------------------------
+    |3|next state true  |State index if condition met    |
+    ------------------------------------------------------
+    |4|next state false |State index if condition failed |
+    ------------------------------------------------------
 )
 
 ( ---- Definitions ---- )
 
 let tape
 let states ( this holds the adresses to the other states that are stored as variables )
+let current_state ( 0: current state index, 1: current tape index )
 
 let state_0
 let state_1
@@ -47,7 +48,51 @@ let state_1
     next
 ;
 
+: get_current_state @states @current_state 0 get get ;
+
+: get_current_tape_location     @current_state 1 get ;
+: set_current_tape_location     @current_state 1 rot set ;
+
+: get_current_tape_cell @tape @current_state 1 get get ;
+: set_current_tape_cell @tape @current_state 1 get rot set ;
+
+: execute_action
+    ( P0 )   dup 0 == if 0 set_current_tape_cell then
+    ( P1 )   dup 1 == if 1 set_current_tape_cell then
+    ( R )    dup 2 == if get_current_tape_location 1 + set_current_tape_location then
+    ( L )    dup 3 == if get_current_tape_location 1 - set_current_tape_location then
+    ( P0,R ) dup 4 == if 0 set_current_tape_cell get_current_tape_location 1 + set_current_tape_location then
+    ( P0,L ) dup 5 == if 0 set_current_tape_cell get_current_tape_location 1 - set_current_tape_location then
+    ( P1,R ) dup 6 == if 1 set_current_tape_cell get_current_tape_location 1 + set_current_tape_location then
+    ( P1,L )     7 == if 1 set_current_tape_cell get_current_tape_location 1 - set_current_tape_location then
+;
+
+: cycle_turing_machine
+    get_current_state    
+    ( Check if there is a condition )
+    dup 0 get if
+        ( TODO ) bye
+    else
+        dup 2 get execute_action
+        3 get @current_state 0 rot set
+    then
+;
+
+: run_turing_machine
+
+    while @current_state 1 get @tape len > @current_state 1 get -1 < and
+    do
+        cycle_turing_machine
+        " Tape: " . print_tape nl
+        " Current cell: " . @current_state 1 get . nl
+    again
+
+;
+
 ( ---- Setting up states ---- )
+
+@current_state 0 push
+@current_state 0 push
 
 @states @state_0 push
 @states @state_1 push
@@ -67,8 +112,15 @@ dup 0 push
 1 push
 
 ( ---- Tape setup ---- )
-
 10 tape_setup
-print_tape
+
+( ---- Running turing machine ---- )
+
+" ---------------------------------- " dup . nl
+" Turing machine example in sorth :) " . nl
+. nl
+
+run_turing_machine
+
 
 0 silent

@@ -4,7 +4,7 @@ pub struct Engine {
     pub running: bool,
     pub waiting_for_input: bool,
     pub silent: bool,
-    pub compiled_exec: bool,
+    pub compiled_exec: Vec<bool>,
 
     pub mode: EngineMode,
 
@@ -25,7 +25,7 @@ pub struct Engine {
     pub words: Vec<Word>,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum EngineMode {
     NORMAL,
     COMPILE,
@@ -43,7 +43,7 @@ impl Engine {
             new_compiled_word: String::new(),
             compiled_words: Vec::new(),
             words: Vec::new(),
-            compiled_exec: false,
+            compiled_exec: vec![false],
             conditional_stack: Vec::new(),
             loop_stack: Vec::new(),
             curr_line_vec: Vec::new(),
@@ -91,10 +91,14 @@ impl Engine {
                 let res = word_def.unwrap().1(self);
                 match res {
                     Ok(ok) => {
-                        out_buffer += ok.as_str().trim();
+                        if !ok.starts_with("\n") || !ok.ends_with("\n") {
+                            out_buffer += ok.trim();
+                        } else {
+                            out_buffer += ok.as_str();
+                        }
                         continue;
                     }
-                    Err(err) => return Err(err),
+                    Err(err) => return Err(err + "\n"),
                 }
             }
 
@@ -104,21 +108,28 @@ impl Engine {
                     .as_str();
             self.curr_line_vec.pop();
             self.curr_word_idx.pop();
-            return Err(err_val);
+            return Err(err_val + "\n");
         }
 
-        if !self.compiled_exec && self.mode == EngineMode::NORMAL {
+        if !self.compiled_exec.last().unwrap() && self.mode == EngineMode::NORMAL {
             if !self.silent {
                 out_buffer.push_str("\nOk.\n");
-            } else {
-                out_buffer.push_str("\n");
             }
+            // else {
+            //     out_buffer.push_str("");
+            // }
         }
 
         self.curr_line_vec.pop();
         self.curr_word_idx.pop();
 
+        out_buffer = out_buffer.trim_matches(|c| c == ' ').to_string();
+
         Ok(out_buffer)
+    }
+
+    pub fn get_compiled_exec(&self) -> bool {
+        self.compiled_exec.last().unwrap().clone()
     }
 
     pub fn get_curr_word(&self) -> String {
