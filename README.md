@@ -18,6 +18,11 @@ Push value to the stack:
 " hello    world " // Note. This will be interpreted as " hello world ". This is the limitation of the interpreters architecture
 ```
 
+New line:
+```
+nl // Writes a newline to the output
+```
+
 Math funcitions:
 ```
 // Currently available math operations
@@ -71,13 +76,13 @@ if ... else ... then
 
 For statements (only in custom words):
 ```
-<end> <start> if ... next // increment by 1 until >= than <end>
-<end> <start> if ... <increment> bynext // increment by <increment> until >= than <end>
+<end> <start> for ... next // increment by 1 until >= than <end>
+<end> <start> for ... <increment> bynext // increment by <increment> until >= than <end>
 ```
 
 While statement (only in custom words):
 ```
-for <condition> do ... again (you can ommit "<condition> do" if you want a never ending loop)
+while <condition> do ... again (you can ommit "<condition> do" if you want a never ending loop)
 ```
 
 Variables:
@@ -88,6 +93,7 @@ let <variable name> // create a variable
 <variable addr> pop // pop value from variable and put it on the main stack
 <variable addr> <addr> get // get value from variable table at position <addr>
 <variable addr> <addr> <val> set // set value of variable table at position <addr> to <val> if position exists
+<varible addr> len // get lenght of the variable internal stack
 ```
 
 Type converion:
@@ -99,6 +105,16 @@ to_float
 to_double
 to_byte
 to_str
+```
+
+Input:
+```
+" This message will be displayed as a question/request for the input to the user " input // pushes user input to the stack
+```
+
+Silent mode:
+```
+<state either -1/0 > silent // turn the "Ok." messages on or off
 ```
 
 Comments:
@@ -130,7 +146,7 @@ cargo run --example file_exec fibonacci
 Add this to ```Cargo.toml```
 ```
 [dependencies]
-sorth = "0.1"
+sorth = "0.2"
 ```
 ## Terminal example
 ```
@@ -183,6 +199,12 @@ The normal mode is the only mode that you want to do enything in if you don't wa
 
 If you want to use sorth in the ```no_std``` ecosystem, then the only that you need to provide is a ```global allocator``` [here](https://os.phil-opp.com/heap-allocation/) is a example on how to do it.
 
+## Change log:
+- Added new line word
+- Fixed readme, variables and comments
+- Added len operator to get the lenght of varables
+- Implemented user input and silent mode.
+
 ## ToDo:
 
 - [x] Generic math ops
@@ -197,7 +219,7 @@ If you want to use sorth in the ```no_std``` ecosystem, then the only that you n
 - [x] Variables support
 - [ ] Extended math ops
 - [ ] File access wordset
-- [ ] Sorth user input interface
+- [x] Sorth user input interface
 - [x] Rework sorth into library crate
 - [x] Share on crates.io
 
