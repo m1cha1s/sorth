@@ -148,7 +148,8 @@ Add this to ```Cargo.toml```
 [dependencies]
 sorth = "0.2"
 ```
-## Terminal example
+## Examples
+### Terminal example
 ```
 use sorth::prelude::*;
 
@@ -172,6 +173,20 @@ fn main() {
 Run with:
 ```
 cargo run --examples terminal
+```
+
+### Execute from file example
+To run the example use:
+```
+cargo run --example file_exec <Sorth program example>
+```
+Currently available Sorth program examples:
+- ```fibonacci```
+- ```turing```
+
+For example
+```
+cargo run --example file_exec turing
 ```
 
 ## Extending the wordset
@@ -200,12 +215,13 @@ The normal mode is the only mode that you want to do enything in if you don't wa
 If you want to use sorth in the ```no_std``` ecosystem, then the only that you need to provide is a ```global allocator``` [here](https://os.phil-opp.com/heap-allocation/) is a example on how to do it.
 
 ## Change log:
+[Here](CHANGELOG.md)
 - Added new line word
 - Fixed readme, variables and comments
 - Added len operator to get the lenght of varables
 - Implemented user input and silent mode.
 
-## ToDo:
+## Goals:
 
 - [x] Generic math ops
 - [x] Generic logic ops
@@ -222,6 +238,7 @@ If you want to use sorth in the ```no_std``` ecosystem, then the only that you n
 - [x] Sorth user input interface
 - [x] Rework sorth into library crate
 - [x] Share on crates.io
+- [ ] Create a Book
 
 ## License
 

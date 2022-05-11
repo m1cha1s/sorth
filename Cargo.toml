@@ -1,12 +1,12 @@
 [package]
 name = "sorth"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 
 authors = ["m1cha1s"]
 
 readme = "README.md"
-license-file = "LICENSE"
+license = "MIT"
 
 repository = "https://github.com/m1cha1s/sorth"
 documentation = "https://github.com/m1cha1s/sorth"
