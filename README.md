@@ -216,11 +216,6 @@ If you want to use sorth in the ```no_std``` ecosystem, then the only that you n
 
 ## Change log:
 [Here](CHANGELOG.md)
-- Added new line word
-- Fixed readme, variables and comments
-- Added len operator to get the lenght of varables
-- Implemented user input and silent mode.
-
 ## Goals:
 
 - [x] Generic math ops
