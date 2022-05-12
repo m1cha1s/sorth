@@ -4,18 +4,22 @@ All changes worth mentioning will be in this file.
 ## Unreleased
 - Turing machine example
 
-## v0.1.0
-Basic implementation:
-- Conditional logic
-- Loops
-- Custom words
-- Types and type conversion
-- Stack ops
-- Basic math ops
-- Variable support
+## v0.2.2
 
-## v0.1.1
-README update
+### Changed
+- Changed order of versions in changelog
+- Fixed terminal example output formatting
+
+### Added
+- Added ```emit``` operator
+
+## v0.2.1
+
+### Changed
+- Updated README
+
+### Added
+- Added chagelog
 
 ## v0.2.0
 
@@ -29,11 +33,16 @@ README update
 - Silent mode support
 - ```nl``` operator
 - Turing machine example (under development)
-  
-## v0.2.1
 
-### Changed
-- Updated README
+## v0.1.1
+README update
 
-### Added
-- Added chagelog
+## v0.1.0
+Basic implementation:
+- Conditional logic
+- Loops
+- Custom words
+- Types and type conversion
+- Stack ops
+- Basic math ops
+- Variable support

@@ -11,8 +11,8 @@ fn main() {
         let mut line = String::new();
         std::io::stdin().read_line(&mut line).unwrap();
         match engine.eval(line) {
-            Ok(ok) => println!("{}", ok.trim()),
-            Err(err) => println!("Error: {}", err.trim()),
+            Ok(ok) => print!("{}", ok.as_str()),
+            Err(err) => print!("{}", err.trim_start()),
         }
     }
 }

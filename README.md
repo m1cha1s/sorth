@@ -18,8 +18,11 @@ Push value to the stack:
 " hello    world " // Note. This will be interpreted as " hello world ". This is the limitation of the interpreters architecture
 ```
 
-New line:
+Special characters:
 ```
+<ASCII character number as byte> emit // Emits the number as a character
+
+// For convenience purposes
 nl // Writes a newline to the output
 ```
 
@@ -216,7 +219,7 @@ If you want to use sorth in the ```no_std``` ecosystem, then the only that you n
 
 ## Change log:
 [Here](CHANGELOG.md)
-## Goals:
+## ToDo:
 
 - [x] Generic math ops
 - [x] Generic logic ops
@@ -229,7 +232,7 @@ If you want to use sorth in the ```no_std``` ecosystem, then the only that you n
 - [x] Float and Double support
 - [x] Variables support
 - [ ] Extended math ops
-- [ ] File access wordset
+- [ ] File access wordset standard
 - [x] Sorth user input interface
 - [x] Rework sorth into library crate
 - [x] Share on crates.io

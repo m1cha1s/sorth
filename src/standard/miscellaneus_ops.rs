@@ -44,3 +44,17 @@ pub fn input(s: &mut Engine) -> Result<String, String> {
 pub fn nl(_s: &mut Engine) -> Result<String, String> {
     Ok("\n".to_string())
 }
+
+pub fn emit(s: &mut Engine) -> Result<String, String> {
+    let character = s.main_stack.pop();
+
+    if character.is_none() {
+        return Err(STACK_UNDERFLOW_ERROR.to_string());
+    }
+
+    if let Types::Byte(character) = character.unwrap() {
+        return Ok(String::from(character as char));
+    } else {
+        return Err(INVALID_TYPE_ERROR.to_string());
+    }
+}
