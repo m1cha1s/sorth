@@ -94,38 +94,46 @@ let state_1
 
 ;
 
-( ---- Setting up states ---- )
+: state_setup 
+    @current_state 0 push
+    @current_state 0 push
 
-@current_state 0 push
-@current_state 0 push
+    @states @state_0 push
+    @states @state_1 push
 
-@states @state_0 push
-@states @state_1 push
+    @state_0
+    dup 0 push
+    dup 2 push
+    dup 4 push
+    dup 1 push
+    0 push
 
-@state_0 
-dup 0 push
-dup 2 push
-dup 4 push
-dup 1 push
-0 push
+    @state_1
+    dup 0 push
+    dup 2 push
+    dup 6 push
+    dup 0 push
+    1 push
+;
 
-@state_1
-dup 0 push
-dup 2 push
-dup 6 push
-dup 0 push
-1 push
+: main
 
-( ---- Tape setup ---- )
-10 tape_setup
+    ( ---- Setting up states ---- )
 
-( ---- Running turing machine ---- )
+    state_setup
 
-" ---------------------------------- " dup . nl
-" Turing machine example in sorth :) " . nl
-. nl
+    ( ---- Tape setup ---- )
+    10 tape_setup
 
-run_turing_machine
+    ( ---- Running turing machine ---- )
 
+    " ---------------------------------- " dup . nl
+    " Turing machine example in sorth :) " . nl
+    . nl
 
+    run_turing_machine
+
+;
+
+main
 0 silent

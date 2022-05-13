@@ -1,11 +1,10 @@
 : fib
-    0
-    for
-    dup 
-    rot
-    +
-    peek
+    0 for
+        dup 
+        rot
+        +
+        peek
     next
 ;
 
-0l 1l 10 fib
+0l 1l 40 fib
