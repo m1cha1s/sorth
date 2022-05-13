@@ -1,9 +1,16 @@
+pub type Int = i32;
+pub type Long = i64;
+pub type Float = f32;
+pub type Double = f64;
+pub type Byte = u8;
+pub type Str = String;
+
 #[derive(Clone)]
 pub enum Types {
-    Int(i32),
-    Long(i64),
-    Float(f32),
-    Double(f64),
-    Byte(u8),
-    Str(String),
+    Int(Int),
+    Long(Long),
+    Float(Float),
+    Double(Double),
+    Byte(Byte),
+    Str(Str),
 }

@@ -18,8 +18,8 @@ use self::{
     conditional_ops::{current_cond, else_word, if_word, skip, then_word},
     logic_ops::{and, equal, grater_than, less_than, not, not_equal, or},
     loop_ops::{again_word, bynext_word, do_word, for_word, i_word, next_word, while_word},
-    math_ops::{add, divide, multiply, subtract},
-    miscellaneus_ops::{bye, input, nl, silent, emit},
+    math_ops::{abs_op, add, divide, multiply, rem_op, subtract},
+    miscellaneus_ops::{bye, emit, input, nl, silent},
     stack_ops::{dot, drop_word, dup, peek, rot, swap_word, two_dup},
     string_ops::{
         string_concat, string_creation, string_mode_toggle, string_split, string_split_whitespace,
@@ -120,6 +120,8 @@ impl WordList for Standard {
                 (|s| s.get_curr_word() == "-" && s.mode_normal(), subtract),
                 (|s| s.get_curr_word() == "*" && s.mode_normal(), multiply),
                 (|s| s.get_curr_word() == "/" && s.mode_normal(), divide),
+                (|s| s.get_curr_word() == "%" && s.mode_normal(), rem_op),
+                (|s| s.get_curr_word() == "abs" && s.mode_normal(), abs_op),
                 // Logic operations
                 (|s| s.get_curr_word() == "==" && s.mode_normal(), equal),
                 (|s| s.get_curr_word() == "!=" && s.mode_normal(), not_equal),
